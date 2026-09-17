@@ -1,6 +1,5 @@
 import {
   CAvatar,
-  CBadge,
   CDropdown,
   CDropdownDivider,
   CDropdownItem,
@@ -11,7 +10,6 @@ import {
   CSidebarFooter,
   CSidebarHeader,
   CSidebarNav,
-  CNavGroup,
   CNavItem,
   CNavTitle,
 } from '@coreui/react'
@@ -21,30 +19,45 @@ import {
   cilAccountLogout,
   cilCloudDownload,
   cilCreditCard,
-  cilMinus,
   cilOptions,
-  cilPlus,
   cilPuzzle,
   cilSettings,
   cilSpeedometer,
   cilUser,
 } from '@coreui/icons'
 
+export type AppPage =
+  | 'Test Forge'
+  | 'Test Suites'
+  | 'Test Cases'
+  | 'Test Runs'
+  | 'Failures'
+  | 'Defects'
+  | 'API Tests'
+  | 'Pipelines'
+
 type SidebarProps = {
-  visible: boolean
+  activePage: AppPage
+  onSelect: (page: AppPage) => void
 }
 
-export const Sidebar = ({ visible }: SidebarProps) => {
+export const Sidebar = ({ activePage, onSelect }: SidebarProps) => {
+  // Prevent hash navigation and let App decide which page to render.
+  const navigateTo = (page: AppPage) => (event: React.MouseEvent) => {
+    event.preventDefault()
+    onSelect(page)
+  }
+
   return (
-    <CSidebar className="border-end h-100" visible={visible}>
+    <CSidebar className="border-end h-100" narrow unfoldable visible>
       <CSidebarHeader className="position-relative">
         <CSidebarBrand>
-          <span className="sidebar-brand-text">QAForge</span>
           <svg
             role="img"
+            aria-label="QAForge logo"
             className="d-sidebar-narrow-none"
-            width="64"
-            height="24"
+            width="88"
+            height="32"
             xmlns="http://www.w3.org/2000/svg"
             xmlnsXlink="http://www.w3.org/1999/xlink"
             viewBox="0 0 312 115"
@@ -60,9 +73,9 @@ export const Sidebar = ({ visible }: SidebarProps) => {
           </svg>
           <svg
             role="img"
-            aria-label="CoreUI Logo Signet"
+            aria-label="QAForge logo mark"
             className="d-sidebar-narrow"
-            width="28"
+            width="88"
             height="32"
             xmlns="http://www.w3.org/2000/svg"
             xmlnsXlink="http://www.w3.org/1999/xlink"
@@ -77,95 +90,29 @@ export const Sidebar = ({ visible }: SidebarProps) => {
       </CSidebarHeader>
       <CSidebarNav variant="tree">
         <CNavTitle>Navigation</CNavTitle>
-        <CNavItem href="#">
-          <CIcon customClassName="nav-icon" icon={cilSpeedometer} /> Feature 1
+        <CNavItem href="#" active={activePage === 'Test Forge'} onClick={navigateTo('Test Forge')}>
+          <CIcon customClassName="nav-icon" icon={cilSpeedometer} /> Test Forge
         </CNavItem>
-        <CNavItem disabled href="#">
-          <CIcon customClassName="nav-icon" icon={cilSpeedometer} /> Feature 2
+        <CNavItem href="#" active={activePage === 'Test Suites'} onClick={navigateTo('Test Suites')}>
+          <CIcon customClassName="nav-icon" icon={cilPuzzle} />  Test Suites
         </CNavItem>
-        <CNavItem href="#">
-          <CIcon customClassName="nav-icon" icon={cilSpeedometer} /> With badge{' '}
-          <CBadge color="primary ms-auto">NEW</CBadge>
+        <CNavItem href="#" active={activePage === 'Test Cases'} onClick={navigateTo('Test Cases')}>
+          <CIcon customClassName="nav-icon" icon={cilPuzzle} /> Test Cases
         </CNavItem>
-        <CNavGroup
-          toggler={({ visible }) => (
-            <>
-              <CIcon customClassName="nav-icon" icon={cilPuzzle} /> Items group
-              <span className="nav-group-toggle-indicator">
-                <CIcon className="icon icon-sm" icon={visible ? cilMinus : cilPlus} />
-              </span>
-            </>
-          )}
-          compact
-          visible
-        >
-          <CNavItem href="#">Item</CNavItem>
-          <CNavItem href="#">Item</CNavItem>
-          <CNavGroup
-            toggler={({ visible }) => (
-              <>
-                <span className="nav-icon">
-                  <span className="nav-icon-bullet"></span>
-                </span>{' '}
-                Items group 2
-                <span className="nav-group-toggle-indicator">
-                  <CIcon className="icon icon-sm" icon={visible ? cilMinus : cilPlus} />
-                </span>
-              </>
-            )}
-            visible
-          >
-            <CNavItem href="#">Item</CNavItem>
-            <CNavItem href="#">Item</CNavItem>
-            <CNavGroup
-              toggler={({ visible }) => (
-                <>
-                  <span className="nav-icon">
-                    <span className="nav-icon-bullet"></span>
-                  </span>{' '}
-                  Items group 3
-                  <span className="nav-group-toggle-indicator">
-                    <CIcon className="icon icon-sm" icon={visible ? cilMinus : cilPlus} />
-                  </span>
-                </>
-              )}
-            >
-              <CNavItem href="#">Item</CNavItem>
-              <CNavItem href="#">Item</CNavItem>
-            </CNavGroup>
-          </CNavGroup>
-        </CNavGroup>
-        <CNavGroup
-          toggler={({ visible }) => (
-            <>
-              <CIcon customClassName="nav-icon" icon={cilSettings} /> Settings group
-              <span className="nav-group-toggle-indicator">
-                <CIcon className="icon icon-sm" icon={visible ? cilMinus : cilPlus} />
-              </span>
-            </>
-          )}
-        >
-          <CNavItem href="#">Item</CNavItem>
-          <CNavItem href="#">Item</CNavItem>
-          <CNavGroup
-            toggler={({ visible }) => (
-              <>
-                <span className="nav-icon">
-                  <span className="nav-icon-bullet"></span>
-                </span>{' '}
-                Nested group
-                <span className="nav-group-toggle-indicator">
-                  <CIcon className="icon icon-sm" icon={visible ? cilMinus : cilPlus} />
-                </span>
-              </>
-            )}
-          >
-            <CNavItem href="#">Item</CNavItem>
-            <CNavItem href="#">Item</CNavItem>
-          </CNavGroup>
-        </CNavGroup>
-        <CNavItem href="https://coreui.io">
-          <CIcon customClassName="nav-icon" icon={cilCloudDownload} /> Download New Package
+        <CNavItem href="#" active={activePage === 'Test Runs'} onClick={navigateTo('Test Runs')}>
+          <CIcon customClassName="nav-icon" icon={cilCloudDownload} /> Test Runs
+        </CNavItem>
+        <CNavItem href="#" active={activePage === 'Failures'} onClick={navigateTo('Failures')}>
+          <CIcon customClassName="nav-icon" icon={cilSettings} /> Failures
+        </CNavItem>
+        <CNavItem href="#" active={activePage === 'Defects'} onClick={navigateTo('Defects')}>
+          <CIcon customClassName="nav-icon" icon={cilSettings} /> Defects
+        </CNavItem>
+        <CNavItem href="#" active={activePage === 'API Tests'} onClick={navigateTo('API Tests')}>
+          <CIcon customClassName="nav-icon" icon={cilSettings} /> API Tests
+        </CNavItem>
+        <CNavItem href="#" active={activePage === 'Pipelines'} onClick={navigateTo('Pipelines')}>
+          <CIcon customClassName="nav-icon" icon={cilSettings} /> Pipelines
         </CNavItem>
       </CSidebarNav>
       <CSidebarFooter>

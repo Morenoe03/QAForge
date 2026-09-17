@@ -1,103 +1,132 @@
-import { useState } from 'react'
-import heroImg from '../assets/hero.png'
-import reactLogo from '../assets/react.svg'
-import viteLogo from '../assets/vite.svg'
+import { useEffect, useState } from "react";
+import Footer from "./Footer";
+
+// These types mirror the data needed by the dashboard cards and pipeline list.
+type SummaryMetric = {
+  value: string;
+  label: string;
+};
+
+type PipelineRun = {
+  suite: string;
+  branch: string;
+  status: "Passed" | "Failed";
+};
+
+type DashboardData = {
+  summaryMetrics: SummaryMetric[];
+  pipelineRuns: PipelineRun[];
+};
+
+type DashboardApiResponse = {
+  passRate: number;
+  totalRuns: number;
+  failedRuns: number;
+  averageDuration: string;
+  recentPipelineRuns: PipelineRun[];
+};
+
+const fallbackDashboardData: DashboardData = {
+  summaryMetrics: [
+  { value: "94.2%", label: "Pass" },
+  { value: "1,284", label: "Runs" },
+  { value: "27", label: "Failed" },
+  { value: "4m31s", label: "Avg" },
+  ],
+  pipelineRuns: [
+    { suite: "Regression", branch: "main", status: "Passed" },
+    { suite: "API Tests", branch: "develop", status: "Passed" },
+    { suite: "Smoke Tests", branch: "feature", status: "Failed" },
+  ],
+};
+
+const dashboardApiUrl = import.meta.env.VITE_DASHBOARD_API_URL;
+
+// Use local demo data until the backend endpoint is configured.
+async function loadDashboardData(): Promise<DashboardData> {
+  if (!dashboardApiUrl) {
+    return fallbackDashboardData;
+  }
+
+  const response = await fetch(dashboardApiUrl);
+  if (!response.ok) {
+    throw new Error(`Dashboard request failed: ${response.status}`);
+  }
+
+  const data = (await response.json()) as DashboardApiResponse;
+  return {
+    summaryMetrics: [
+      { value: `${data.passRate}%`, label: "Pass" },
+      { value: data.totalRuns.toLocaleString(), label: "Runs" },
+      { value: data.failedRuns.toLocaleString(), label: "Failed" },
+      { value: data.averageDuration, label: "Avg" },
+    ],
+    pipelineRuns: data.recentPipelineRuns,
+  };
+}
 
 export default function MainContent() {
-	const [count, setCount] = useState(0)
+  const [dashboardData, setDashboardData] = useState(fallbackDashboardData);
 
-	return (
-		<main className="main-content flex-1">
-			<section id="center">
-				<div className="hero">
-					<img src={heroImg} className="base" width="170" height="179" alt="" />
-					<img src={reactLogo} className="framework" alt="React logo" />
-					<img src={viteLogo} className="vite" alt="Vite logo" />
-				</div>
-				<div>
-					<h1>Get started</h1>
-					<p>
-						Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-					</p>
-				</div>
-				<button
-					type="button"
-					className="counter"
-					onClick={() => setCount((value) => value + 1)}
-				>
-					Count is {count} and much more
-				</button>
-			</section>
+  // Refresh the dashboard from the configured API without blocking the first render.
+  useEffect(() => {
+    if (!dashboardApiUrl) {
+      return;
+    }
 
-			<div className="ticks"></div>
+    loadDashboardData()
+      .then(setDashboardData)
+      .catch((error: unknown) => {
+        console.error("Unable to load dashboard data", error);
+      });
+  }, []);
 
-			<section id="next-steps">
-				<div id="docs">
-					<svg className="icon" role="presentation" aria-hidden="true">
-						<use href="/icons.svg#documentation-icon"></use>
-					</svg>
-					<h2>Documentation</h2>
-					<p>Your questions, answered</p>
-					<ul>
-						<li>
-							<a href="https://vite.dev/" target="_blank">
-								<img className="logo" src={viteLogo} alt="" />
-								Explore Vite
-							</a>
-						</li>
-						<li>
-							<a href="https://react.dev/" target="_blank">
-								<img className="button-icon" src={reactLogo} alt="" />
-								Learn more
-							</a>
-						</li>
-					</ul>
-				</div>
-				<div id="social">
-					<svg className="icon" role="presentation" aria-hidden="true">
-						<use href="/icons.svg#social-icon"></use>
-					</svg>
-					<h2>Connect with us</h2>
-					<p>Join the Vite community</p>
-					<ul>
-						<li>
-							<a href="https://github.com/vitejs/vite" target="_blank">
-								<svg className="button-icon" role="presentation" aria-hidden="true">
-									<use href="/icons.svg#github-icon"></use>
-								</svg>
-								GitHub
-							</a>
-						</li>
-						<li>
-							<a href="https://chat.vite.dev/" target="_blank">
-								<svg className="button-icon" role="presentation" aria-hidden="true">
-									<use href="/icons.svg#discord-icon"></use>
-								</svg>
-								Discord
-							</a>
-						</li>
-						<li>
-							<a href="https://x.com/vite_js" target="_blank">
-								<svg className="button-icon" role="presentation" aria-hidden="true">
-									<use href="/icons.svg#x-icon"></use>
-								</svg>
-								X.com
-							</a>
-						</li>
-						<li>
-							<a href="https://bsky.app/profile/vite.dev" target="_blank">
-								<svg className="button-icon" role="presentation" aria-hidden="true">
-									<use href="/icons.svg#bluesky-icon"></use>
-								</svg>
-								Bluesky
-							</a>
-						</li>
-					</ul>
-				</div>
-			</section>
+  return (
+    <main className="main-content flex-1">
+      {/* Dashboard overview and recent execution activity. */}
+      <section id="center">
+        <div>
+          <h1>Get started</h1>
+          <p>
+            Good evening,
+          </p>
+        </div>
 
-			<div className="ticks"></div>
-			<section id="spacer"></section>
-		</main>
-	)
+        <div className="test-summary" aria-label="Test summary">
+          {dashboardData.summaryMetrics.map((metric) => (
+            <div className="summary-item" key={metric.label}>
+              <strong>{metric.value}</strong>
+              <span>{metric.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <section className="test-executions" aria-labelledby="test-executions-title">
+          <div className="section-heading">
+            <h2 id="test-executions-title">Test Executions</h2>
+            <span>Recent Pipeline Runs</span>
+          </div>
+          <div className="pipeline-runs" role="table" aria-label="Recent pipeline runs">
+            {dashboardData.pipelineRuns.map((run) => (
+              <div className="pipeline-run" role="row" key={`${run.suite}-${run.branch}`}>
+                <strong role="cell">{run.suite}</strong>
+                <span className="pipeline-branch" role="cell">{run.branch}</span>
+                <span className={`pipeline-status ${run.status.toLowerCase()}`} role="cell">
+                  {run.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+		
+
+
+
+
+
+      </section>
+
+      <Footer />
+    </main>
+  );
 }
