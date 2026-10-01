@@ -5,6 +5,7 @@ QAForge is a web application for managing test suites, monitoring automated test
 ## Prerequisites
 
 - Node.js and npm
+- Python 3
 - Git
 
 ## Run Locally
@@ -19,9 +20,21 @@ npm run dev
 
 Vite will print the local URL, usually `http://localhost:5173`.
 
+## Backend API
+
+The backend is a FastAPI application. When it is running locally, its interactive Swagger API documentation is available at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
+
 ## Frontend Commands
 
 Run these commands from `QAForge/frontend`:
+
+## Backend Commands
+
+Run this command from `QAForge/backend`:
+
+```powershell
+uvicorn app.main:app --reload
+```
 
 ```powershell
 npm run dev       # Start the development server
@@ -34,6 +47,18 @@ npm run preview   # Preview the production build locally
 
 ```text
 QAForge/
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   │   └── routes/
+│   │   │       └── dashboard.py  # Dashboard statistics endpoint
+│   │   ├── core/        # Backend core configuration and utilities
+│   │   ├── models/      # Data models
+│   │   ├── schemas/     # API schemas
+│   │   ├── services/    # Application services
+│   │   └── main.py      # FastAPI application setup
+│   ├── tests/
+│   └── requirements.txt
 ├── frontend/
 │   ├── public/          # Static files served from the site root
 │   ├── src/
