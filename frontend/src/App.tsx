@@ -1,6 +1,6 @@
 import { useState, type ComponentType } from 'react'
 import Header from './components/Header'
-import MainContent from './components/MainContent'
+import MainContent from './components/StatsDashboard'
 import { Sidebar, type AppPage } from './components/Sidebar'
 import ApiTestsPage from './components/pages/ApiTestsPage'
 import DefectsPage from './components/pages/DefectsPage'
@@ -22,7 +22,6 @@ const pageComponents: Record<Exclude<AppPage, 'Test Forge'>, ComponentType> = {
 }
 
 function App() {
-  // Keep the selected workspace page and theme at the application shell level.
   const [darkMode, setDarkMode] = useState(false)
   const [activePage, setActivePage] = useState<AppPage>('Test Forge')
   const ActivePage = activePage === 'Test Forge' ? null : pageComponents[activePage]
