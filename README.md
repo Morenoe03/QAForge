@@ -33,7 +33,8 @@ Run these commands from `QAForge/frontend`:
 Run this command from `QAForge/backend`:
 
 ```powershell
-uvicorn app.main:app --reload
+python -m pip install fastapi "uvicorn[standard]"
+python -m uvicorn app.main:app --reload
 ```
 
 ```powershell

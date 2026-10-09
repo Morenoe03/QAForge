@@ -58,7 +58,7 @@ export default function MainContent() {
               <span>Failed</span>
             </div>
             <div className="summary-item">
-              <strong>{stats.average_duration_time}</strong>
+              <strong>{stats.average_duration_seconds}</strong>
               <span>Avg (s)</span>
             </div>
           </div>

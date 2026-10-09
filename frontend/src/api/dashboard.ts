@@ -2,7 +2,7 @@ export interface DashboardStats {
   pass_rate: number;
     tests_executed: number;
     failed_tests: number;
-    average_duration_time: string;
+    average_duration_seconds : number;
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
