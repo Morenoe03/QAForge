@@ -1,0 +1,40 @@
+"""create test suites table
+
+Revision ID: e54d825b1a90
+Revises:
+Create Date: 2026-10-21 01:36:34.047049
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+
+# Alembic uses these fields to track the migration history.
+revision: str = 'e54d825b1a90'
+down_revision: Union[str, Sequence[str], None] = None
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    op.create_table('test_suites',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=150), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('status', sa.String(length=20), server_default='active', nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_test_suites_id'), 'test_suites', ['id'], unique=False)
+    op.create_index(op.f('ix_test_suites_name'), 'test_suites', ['name'], unique=True)
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    op.drop_index(op.f('ix_test_suites_name'), table_name='test_suites')
+    op.drop_index(op.f('ix_test_suites_id'), table_name='test_suites')
+    op.drop_table('test_suites')

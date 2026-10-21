@@ -4,7 +4,6 @@ type WorkspacePageProps = {
   page: Exclude<AppPage, 'Test Forge'>
 }
 
-// Page-specific copy stays centralized while each navigation item has its own component.
 const pageDetails: Record<WorkspacePageProps['page'], { description: string; action: string }> = {
   'Test Suites': {
     description: 'Organize reusable collections of automated tests.',
@@ -41,7 +40,6 @@ export default function WorkspacePage({ page }: WorkspacePageProps) {
 
   return (
     <main className="workspace-page">
-      {/* Shared workspace shell for feature pages that will receive their own data views. */}
       <div className="workspace-page-header">
         <div>
           <span className="workspace-eyebrow">QAForge workspace</span>

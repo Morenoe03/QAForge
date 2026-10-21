@@ -7,10 +7,56 @@ QAForge is a web application for managing test suites, monitoring automated test
 - Node.js and npm
 - Python 3
 - Git
+- Docker Desktop with Docker Compose
+
+## Run with Docker
+
+From the `QAForge` directory, start the frontend, backend, and PostgreSQL database:
+
+```powershell
+docker compose up --build
+```
+
+Open the frontend at [http://localhost:5173](http://localhost:5173). The backend API
+and interactive documentation are available at [http://localhost:8000](http://localhost:8000)
+and [http://localhost:8000/docs](http://localhost:8000/docs).
+The backend connects to PostgreSQL on the Compose network, and its database readiness
+check is available at [http://localhost:8000/health/database](http://localhost:8000/health/database).
+
+The database password is read from `QAForge/.env` as `POSTGRES_PASSWORD`. Keep that
+file local and do not commit it.
+Stop the containers with `Ctrl+C`, or run
+`docker compose down`. Database data remains in the `qaforge_postgres_data` volume;
+to remove that data as well, run `docker compose down --volumes`.
+
+### Database migrations
+
+Run Alembic inside the backend container so it uses the same PostgreSQL settings as
+the API:
+
+```powershell
+docker compose exec backend alembic revision --autogenerate -m "describe schema change"
+docker compose exec backend alembic upgrade head
+```
+
+This is the command to open terminal in powershell to run SQL commands:
+docker exec -it qaforge-db psql -U qaforge -d qaforge
+
 
 ## Run Locally
 
-Run these commands from the repository root, `QAForge`:
+Start PostgreSQL from the `QAForge` directory. For local backend runs,
+`POSTGRES_PASSWORD` is loaded from the project-level `.env` automatically, and the
+database host defaults to `localhost`.
+
+```powershell
+docker compose up -d db
+cd .\backend
+python -m pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
+```
+
+In a second terminal, start the frontend:
 
 ```powershell
 cd .\frontend
@@ -30,10 +76,11 @@ Run these commands from `QAForge/frontend`:
 
 ## Backend Commands
 
-Run this command from `QAForge/backend`:
+Run these commands from `QAForge/backend`:
 
 ```powershell
-uvicorn app.main:app --reload
+python -m pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
 ```
 
 ```powershell

@@ -1,7 +1,14 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+import logging
 
-from app.api.routes import dashboard
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+
+from app.api.routes import dashboard, test_suites
+from app.core.database import engine
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="QAForge API",
@@ -37,4 +44,24 @@ def health_check():
         "service": "QAForge API",  
     }
 
+
+@app.get("/health/database")
+def database_health_check():
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except SQLAlchemyError as exc:
+        logger.exception("PostgreSQL health check failed")
+        raise HTTPException(
+            status_code=503,
+            detail="Database connection failed",
+        ) from exc
+
+    return {
+        "status": "healthy",
+        "database": "connected",
+    }
+
+
 app.include_router(dashboard.router)
+app.include_router(test_suites.router)

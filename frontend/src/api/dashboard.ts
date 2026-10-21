@@ -2,12 +2,13 @@ export interface DashboardStats {
   pass_rate: number;
     tests_executed: number;
     failed_tests: number;
-    average_duration_time: string;
+    average_duration_seconds : number;
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
     const response = await fetch(
-        "http://127.0.0.1:8000/api/dashboard/stats"
+        import.meta.env.VITE_DASHBOARD_API_URL ??
+            "http://127.0.0.1:8000/api/dashboard/stats"
     );
 
     if (!response.ok) {

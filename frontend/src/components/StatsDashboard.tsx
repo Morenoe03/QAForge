@@ -32,7 +32,6 @@ export default function MainContent() {
 
   return (
     <main className="main-content flex-1">
-      {/* Dashboard overview and recent execution activity. */}
       <section id="center">
         <div>
           <h1>Get started</h1>
@@ -58,7 +57,7 @@ export default function MainContent() {
               <span>Failed</span>
             </div>
             <div className="summary-item">
-              <strong>{stats.average_duration_time}</strong>
+              <strong>{stats.average_duration_seconds}</strong>
               <span>Avg (s)</span>
             </div>
           </div>
