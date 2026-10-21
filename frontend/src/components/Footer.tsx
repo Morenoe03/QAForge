@@ -1,5 +1,4 @@
 export default function Footer() {
-  // Keep external project links in a reusable footer instead of the dashboard view.
   return (
     <footer className="app-footer">
       <div className="footer-inner">

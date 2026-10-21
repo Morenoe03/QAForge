@@ -6,8 +6,7 @@ from dotenv import load_dotenv
 from sqlalchemy import URL, create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-# Load the project-level .env for local runs; environment variables already set
-# by Docker Compose or the shell take precedence.
+# Load local settings from the project .env; shell and Docker Compose values take precedence.
 project_env = Path(__file__).resolve().parents[3] / ".env"
 load_dotenv(project_env)
 

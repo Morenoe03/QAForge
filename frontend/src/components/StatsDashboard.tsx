@@ -32,7 +32,6 @@ export default function MainContent() {
 
   return (
     <main className="main-content flex-1">
-      {/* Dashboard overview and recent execution activity. */}
       <section id="center">
         <div>
           <h1>Get started</h1>

@@ -14,7 +14,6 @@ type HeaderProps = {
 }
 
 export default function Header({ darkMode, onThemeToggle }: HeaderProps) {
-  // The header stays intentionally small: branding and the theme control only.
   return (
     <CHeader>
       <CContainer fluid className="justify-content-between">

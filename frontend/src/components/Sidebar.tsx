@@ -42,7 +42,6 @@ type SidebarProps = {
 }
 
 export const Sidebar = ({ activePage, onSelect }: SidebarProps) => {
-  // Prevent hash navigation and let App decide which page to render.
   const navigateTo = (page: AppPage) => (event: React.MouseEvent) => {
     event.preventDefault()
     onSelect(page)
