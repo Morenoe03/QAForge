@@ -7,7 +7,8 @@ export interface DashboardStats {
 
 export async function getDashboardStats(): Promise<DashboardStats> {
     const response = await fetch(
-        "http://127.0.0.1:8000/api/dashboard/stats"
+        import.meta.env.VITE_DASHBOARD_API_URL ??
+            "http://127.0.0.1:8000/api/dashboard/stats"
     );
 
     if (!response.ok) {
