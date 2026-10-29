@@ -70,9 +70,45 @@ Vite will print the local URL, usually `http://localhost:5173`.
 
 The backend is a FastAPI application. When it is running locally, its interactive Swagger API documentation is available at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
 
+The Test Suites page reads and writes suites through the FastAPI `/api/test-suites`
+endpoints. In Docker Compose, the frontend calls the backend at
+`http://localhost:8000`, and the backend persists suites in PostgreSQL.
+For local frontend development, set `VITE_API_BASE_URL` in
+`frontend/.env.local` if the API is not at that default URL.
+
 ## Frontend Commands
 
 Run these commands from `QAForge/frontend`:
+
+```powershell
+npm run dev
+npm run build
+npm run lint
+npm run preview
+```
+
+### Browser tests
+
+Browser tests use Playwright to exercise the Test Suites page against the real
+FastAPI service and PostgreSQL database. Start PostgreSQL and apply migrations
+before running them locally:
+
+```powershell
+cd ..\backend
+alembic upgrade head
+cd ..\frontend
+npx playwright install chromium
+npm run test:e2e
+```
+
+The Playwright configuration starts the FastAPI backend and Vite frontend. The
+database must already be running, and the backend uses the normal local
+`POSTGRES_*` settings. Playwright writes an HTML report to
+`frontend/playwright-report` and machine-readable results to
+`frontend/test-results`.
+GitHub Actions runs the backend and browser suites on pushes and pull requests
+that change backend, frontend, Docker Compose, or the CI workflow; reports
+are uploaded as workflow artifacts.
 
 ## Backend Commands
 
@@ -83,11 +119,11 @@ python -m pip install -r requirements.txt
 python -m uvicorn app.main:app --reload
 ```
 
+Install the backend development dependencies and run the API tests with:
+
 ```powershell
-npm run dev       # Start the development server
-npm run build     # Type-check and create a production build
-npm run lint      # Run ESLint
-npm run preview   # Preview the production build locally
+python -m pip install -r requirements-dev.txt
+python -m pytest -v
 ```
 
 ## Project Structure
