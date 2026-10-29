@@ -7,7 +7,9 @@ const suiteNamesToCleanUp: string[] = []
 async function openTestSuites(page: Page) {
   await page.goto('/')
   await page.getByRole('link', { name: 'Test Suites' }).click()
-  await expect(page.getByRole('heading', { name: 'Test Suites' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Test Suites', exact: true }),
+  ).toBeVisible()
   await expect(page.getByText('Loading test suites…')).not.toBeVisible()
 }
 
