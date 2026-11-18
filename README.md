@@ -100,6 +100,10 @@ deleted. The Failures page is derived from failed run results through
 than sample values. Test execution is manual; QAForge does not execute test
 case code.
 
+Defects are managed through `/api/defects` and can be linked to a failed test
+result. Their captured run and case names remain available if the linked run is
+later removed.
+
 ## Frontend Commands
 
 Run these commands from `QAForge/frontend`:
