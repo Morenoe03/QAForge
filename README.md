@@ -2,6 +2,46 @@
 
 QAForge is a web application for managing test suites, monitoring automated test runs, reviewing failures, tracking defects, and triggering CI/CD automation.
 
+## Screenshots
+
+The gallery below shows the local demo workspace with sample data. Account details
+are obscured in the screenshots.
+
+<table>
+  <tr>
+    <th>Sign in</th>
+    <th>Test Suites</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/login.png" alt="QAForge sign-in page" width="100%"></td>
+    <td><img src="docs/screenshots/test-suites.png" alt="Test Suites page showing active suites" width="100%"></td>
+  </tr>
+  <tr>
+    <th>Test Cases</th>
+    <th>Test Runs</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/test-cases.png" alt="Test Cases page showing cases and filters" width="100%"></td>
+    <td><img src="docs/screenshots/test-runs.png" alt="Test Runs page showing run outcomes" width="100%"></td>
+  </tr>
+  <tr>
+    <th>Failures</th>
+    <th>Defects</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/failures.png" alt="Failures page showing a failed test result" width="100%"></td>
+    <td><img src="docs/screenshots/defects.png" alt="Defects page showing a tracked defect" width="100%"></td>
+  </tr>
+  <tr>
+    <th>API Tests</th>
+    <th>Pipelines</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/api-tests.png" alt="API Tests page showing a documented request" width="100%"></td>
+    <td><img src="docs/screenshots/pipelines.png" alt="Pipelines page showing GitHub Actions configuration" width="100%"></td>
+  </tr>
+</table>
+
 ## Prerequisites
 
 - Node.js and npm
