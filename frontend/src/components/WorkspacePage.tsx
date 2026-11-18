@@ -1,7 +1,7 @@
 import type { AppPage } from './Sidebar'
 
 type WorkspacePageProps = {
-  page: Exclude<AppPage, 'Test Forge'>
+  page: Exclude<AppPage, 'Test Forge' | 'Account' | 'Settings'>
 }
 
 const pageDetails: Record<WorkspacePageProps['page'], { description: string; action: string }> = {

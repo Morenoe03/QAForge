@@ -6,18 +6,42 @@ import {
   CHeaderNav,
   CNavItem,
 } from '@coreui/react'
-import { Moon, Sun } from 'lucide-react'
+import { Menu, Moon, Sun, X } from 'lucide-react'
+import BrandMark from './BrandMark'
 
 type HeaderProps = {
   darkMode: boolean
+  menuOpen: boolean
+  onMenuToggle: () => void
   onThemeToggle: () => void
 }
 
-export default function Header({ darkMode, onThemeToggle }: HeaderProps) {
+export default function Header({
+  darkMode,
+  menuOpen,
+  onMenuToggle,
+  onThemeToggle,
+}: HeaderProps) {
   return (
     <CHeader>
       <CContainer fluid className="justify-content-between">
-        <CHeaderBrand href="#">QAForge</CHeaderBrand>
+        <div className="header-brand-group">
+          <CButton
+            aria-controls="app-navigation"
+            aria-expanded={menuOpen}
+            aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
+            className="mobile-nav-toggle"
+            color="light"
+            onClick={onMenuToggle}
+            type="button"
+            variant="ghost"
+          >
+            {menuOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
+          </CButton>
+          <CHeaderBrand className="qaforge-header-brand" href="#">
+            <BrandMark />
+          </CHeaderBrand>
+        </div>
         <CHeaderNav>
           <CNavItem>
             <CButton

@@ -1,3 +1,5 @@
+import { apiFetch } from './request'
+
 export interface TestSuite {
   id: number
   name: string
@@ -29,13 +31,13 @@ async function throwForFailedResponse(response: Response): Promise<void> {
 }
 
 export async function listTestSuites(signal?: AbortSignal): Promise<TestSuite[]> {
-  const response = await fetch(`${apiBaseUrl}/api/test-suites`, { signal })
+  const response = await apiFetch(`${apiBaseUrl}/api/test-suites`, { signal })
   await throwForFailedResponse(response)
   return response.json() as Promise<TestSuite[]>
 }
 
 export async function createTestSuite(input: TestSuiteInput): Promise<TestSuite> {
-  const response = await fetch(`${apiBaseUrl}/api/test-suites`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/test-suites`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -48,7 +50,7 @@ export async function updateTestSuite(
   id: number,
   input: TestSuiteInput,
 ): Promise<TestSuite> {
-  const response = await fetch(`${apiBaseUrl}/api/test-suites/${id}`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/test-suites/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -58,7 +60,7 @@ export async function updateTestSuite(
 }
 
 export async function deleteTestSuite(id: number): Promise<void> {
-  const response = await fetch(`${apiBaseUrl}/api/test-suites/${id}`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/test-suites/${id}`, {
     method: 'DELETE',
   })
   await throwForFailedResponse(response)

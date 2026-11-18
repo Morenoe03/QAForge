@@ -3,7 +3,7 @@ from logging.config import fileConfig
 from alembic import context
 
 from app.core.database import database_url, engine
-from app.models import TestSuite
+from app.models import TestCase, TestSuite, User
 
 config = context.config
 
