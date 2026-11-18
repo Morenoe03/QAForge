@@ -18,15 +18,34 @@
 
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
 #root {
   width: 100%;
-  min-height: 100vh;
+  min-width: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+#root {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
   text-align: left;
-  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  overflow: hidden;
 }
 
 h1,

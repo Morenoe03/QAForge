@@ -24,14 +24,32 @@ const pageComponents: Record<Exclude<AppPage, 'Test Forge'>, ComponentType> = {
 function App() {
   const [darkMode, setDarkMode] = useState(false)
   const [activePage, setActivePage] = useState<AppPage>('Test Forge')
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const ActivePage = activePage === 'Test Forge' ? null : pageComponents[activePage]
 
   return (
     <div className={`app-layout${darkMode ? ' dark-mode' : ''}`}>
-      <Sidebar activePage={activePage} onSelect={setActivePage} />
+      <Sidebar
+        activePage={activePage}
+        mobileOpen={mobileNavOpen}
+        onSelect={(page) => {
+          setActivePage(page)
+          setMobileNavOpen(false)
+        }}
+      />
+      {mobileNavOpen && (
+        <button
+          aria-label="Close navigation"
+          className="mobile-sidebar-backdrop"
+          onClick={() => setMobileNavOpen(false)}
+          type="button"
+        />
+      )}
       <div className="app-content">
         <Header
           darkMode={darkMode}
+          menuOpen={mobileNavOpen}
+          onMenuToggle={() => setMobileNavOpen((open) => !open)}
           onThemeToggle={() => setDarkMode((enabled) => !enabled)}
         />
         {ActivePage ? <ActivePage /> : <MainContent />}

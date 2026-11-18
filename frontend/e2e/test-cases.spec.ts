@@ -293,3 +293,30 @@ test('searches, filters, and paginates test cases', async ({ page, request }) =>
   await expect(page.getByLabel('Search test cases')).toHaveValue('')
   await expect(page.getByLabel('Filter by suite')).toHaveValue('')
 })
+
+test('keeps the layout within a mobile viewport and exposes navigation', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+
+  const openNavigation = page.getByRole('button', { name: 'Open navigation' })
+  await expect(openNavigation).toBeVisible()
+  await openNavigation.click()
+  await page.getByRole('link', { name: 'Test Cases' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Test Cases', exact: true }),
+  ).toBeVisible()
+
+  const viewportWidths = await page.evaluate(() => ({
+    document: document.documentElement.scrollWidth,
+    main: document.querySelector('main')?.scrollWidth ?? 0,
+    mainViewport: document.querySelector('main')?.clientWidth ?? 0,
+    viewport: document.documentElement.clientWidth,
+  }))
+  expect(viewportWidths.document).toBeLessThanOrEqual(viewportWidths.viewport)
+  expect(viewportWidths.main).toBeLessThanOrEqual(viewportWidths.mainViewport)
+  await expect(
+    page.getByRole('button', { name: 'Open navigation' }),
+  ).toBeVisible()
+})
