@@ -1,9 +1,27 @@
+from __future__ import annotations
+
 from datetime import datetime
 
-from sqlalchemy import DateTime, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Column, DateTime, ForeignKey, String, Table, Text, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+
+test_suite_cases = Table(
+    "test_suite_cases",
+    Base.metadata,
+    Column(
+        "test_suite_id",
+        ForeignKey("test_suites.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "test_case_id",
+        ForeignKey("test_cases.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
 
 
 class TestSuite(Base):
@@ -25,4 +43,8 @@ class TestSuite(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
+    )
+    test_cases: Mapped[list[TestCase]] = relationship(
+        secondary=test_suite_cases,
+        back_populates="suites",
     )

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.api.routes import dashboard, test_suites
+from app.api.routes import dashboard, test_cases, test_suites
 from app.core.database import engine
 
 logger = logging.getLogger(__name__)
@@ -64,4 +64,5 @@ def database_health_check():
 
 
 app.include_router(dashboard.router)
+app.include_router(test_cases.router)
 app.include_router(test_suites.router)

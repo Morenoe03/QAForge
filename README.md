@@ -76,6 +76,11 @@ endpoints. In Docker Compose, the frontend calls the backend at
 For local frontend development, set `VITE_API_BASE_URL` in
 `frontend/.env.local` if the API is not at that default URL.
 
+Test Cases are managed through `/api/test-cases`. Each case includes its title,
+description, preconditions, steps, expected result, priority, type, status, and
+tags. Cases may be linked to multiple Test Suites; deleting a suite removes its
+link without deleting the reusable case.
+
 ## Frontend Commands
 
 Run these commands from `QAForge/frontend`:
