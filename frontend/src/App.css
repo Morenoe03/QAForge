@@ -297,6 +297,63 @@
   min-height: 120px;
 }
 
+.test-case-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-items: end;
+  gap: 14px;
+  width: 100%;
+  max-width: 1060px;
+  margin-bottom: 24px;
+}
+
+.test-case-filters label {
+  display: grid;
+  gap: 7px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.test-case-filters input,
+.test-case-filters select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #c8d3e1;
+  border-radius: 8px;
+  color: #172338;
+  background: #ffffff;
+  font: inherit;
+}
+
+.test-case-filter-actions,
+.test-case-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.test-case-filter-actions .workspace-primary-action {
+  white-space: nowrap;
+}
+
+.test-case-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  max-width: 1060px;
+  color: #667085;
+  font-size: 14px;
+}
+
+.test-case-pagination-controls > span {
+  white-space: nowrap;
+}
+
 .test-case-form-hint,
 .test-case-description {
   color: #667085;
@@ -475,6 +532,18 @@
 .app-layout.dark-mode .test-case-form-hint,
 .app-layout.dark-mode .test-case-description {
   color: #aeb9ca;
+}
+
+.app-layout.dark-mode .test-case-filters label,
+.app-layout.dark-mode .test-case-pagination {
+  color: #aeb9ca;
+}
+
+.app-layout.dark-mode .test-case-filters input,
+.app-layout.dark-mode .test-case-filters select {
+  border-color: #475569;
+  color: #ffffff;
+  background: #374151;
 }
 
 .app-layout.dark-mode .test-case-details p,

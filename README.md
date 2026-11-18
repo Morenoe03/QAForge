@@ -54,6 +54,12 @@ docker compose up -d db
 cd .\backend
 python -m pip install -r requirements.txt
 python -m uvicorn app.main:app --reload
+
+'or (for mac)'
+
+python3 -m pip install -r requirements.txt
+python3 -m uvicorn app.main:app --reload
+
 ```
 
 In a second terminal, start the frontend:
@@ -79,7 +85,9 @@ For local frontend development, set `VITE_API_BASE_URL` in
 Test Cases are managed through `/api/test-cases`. Each case includes its title,
 description, preconditions, steps, expected result, priority, type, status, and
 tags. Cases may be linked to multiple Test Suites; deleting a suite removes its
-link without deleting the reusable case.
+link without deleting the reusable case. The list endpoint supports `search`,
+`suite_id`, `priority`, `status`, `page`, and `page_size` query parameters and
+returns the matching items with pagination metadata.
 
 ## Frontend Commands
 

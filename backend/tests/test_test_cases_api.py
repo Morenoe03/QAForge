@@ -4,6 +4,12 @@ def create_suite(client, name):
     return response.json()
 
 
+def create_case(client, **payload):
+    response = client.post("/api/test-cases", json=payload)
+    assert response.status_code == 201
+    return response.json()
+
+
 def test_test_case_crud_and_suite_associations(client):
     first_suite = create_suite(client, "Checkout")
     second_suite = create_suite(client, "Payments")
@@ -23,7 +29,6 @@ def test_test_case_crud_and_suite_associations(client):
             "suite_ids": [first_suite["id"], second_suite["id"]],
         },
     )
-
     assert create_response.status_code == 201
     created_case = create_response.json()
     case_id = created_case["id"]
@@ -35,7 +40,9 @@ def test_test_case_crud_and_suite_associations(client):
 
     list_response = client.get("/api/test-cases")
     assert list_response.status_code == 200
-    assert any(case["id"] == case_id for case in list_response.json())
+    assert any(
+        case["id"] == case_id for case in list_response.json()["items"]
+    )
 
     update_response = client.patch(
         f"/api/test-cases/{case_id}",
@@ -107,3 +114,93 @@ def test_deleting_suite_keeps_test_case_and_removes_link(client):
     remaining_case = client.get(f"/api/test-cases/{case_id}")
     assert remaining_case.status_code == 200
     assert remaining_case.json()["suite_ids"] == []
+
+
+def test_test_case_search_filters_and_pagination(client):
+    checkout_suite = create_suite(client, "Checkout search")
+    other_suite = create_suite(client, "Other search")
+    first_case = create_case(
+        client,
+        title="Checkout cart with card",
+        priority="high",
+        status="active",
+        suite_ids=[checkout_suite["id"]],
+        steps=["Apply loyalty code"],
+        tags=["checkout"],
+    )
+    second_case = create_case(
+        client,
+        title="Checkout cart with wallet",
+        priority="high",
+        status="active",
+        suite_ids=[checkout_suite["id"]],
+    )
+    create_case(
+        client,
+        title="Checkout cart archived",
+        priority="high",
+        status="deprecated",
+        suite_ids=[checkout_suite["id"]],
+    )
+    create_case(
+        client,
+        title="Checkout cart in another suite",
+        priority="high",
+        status="active",
+        suite_ids=[other_suite["id"]],
+    )
+
+    first_page = client.get(
+        "/api/test-cases",
+        params={
+            "search": "checkout",
+            "suite_id": checkout_suite["id"],
+            "priority": "high",
+            "status": "active",
+            "page": 1,
+            "page_size": 1,
+        },
+    )
+    second_page = client.get(
+        "/api/test-cases",
+        params={
+            "search": "checkout",
+            "suite_id": checkout_suite["id"],
+            "priority": "high",
+            "status": "active",
+            "page": 2,
+            "page_size": 1,
+        },
+    )
+    tags_search = client.get(
+        "/api/test-cases",
+        params={"search": "loyalty", "suite_id": checkout_suite["id"]},
+    )
+
+    assert first_page.status_code == 200
+    assert first_page.json()["total"] == 2
+    assert first_page.json()["page"] == 1
+    assert first_page.json()["page_size"] == 1
+    assert first_page.json()["items"][0]["id"] == second_case["id"]
+    assert second_page.json()["items"][0]["id"] == first_case["id"]
+    assert tags_search.json()["total"] == 1
+    assert tags_search.json()["items"][0]["id"] == first_case["id"]
+
+
+def test_test_case_list_rejects_invalid_pagination_and_filters(client):
+    invalid_requests = [
+        {"page": 0},
+        {"page_size": 101},
+        {"suite_id": 0},
+        {"priority": "urgent"},
+        {"status": "paused"},
+    ]
+
+    for params in invalid_requests:
+        assert client.get("/api/test-cases", params=params).status_code == 422
+
+    oversized_search = client.get(
+        "/api/test-cases",
+        params={"search": "x" * 201},
+    )
+    assert oversized_search.status_code == 422

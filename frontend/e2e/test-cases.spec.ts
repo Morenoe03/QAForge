@@ -27,11 +27,14 @@ async function createSuite(
 }
 
 async function cleanUpTestData(request: APIRequestContext) {
-  const casesResponse = await request.get(`${apiBaseUrl}/api/test-cases`)
-  expect(casesResponse.ok()).toBeTruthy()
-  const cases: Array<{ id: number; title: string }> = await casesResponse.json()
   for (const title of caseTitlesToCleanUp.splice(0)) {
-    const testCase = cases.find((item) => item.title === title)
+    const casesResponse = await request.get(`${apiBaseUrl}/api/test-cases`, {
+      params: { search: title, page_size: '100' },
+    })
+    expect(casesResponse.ok()).toBeTruthy()
+    const casePage: { items: Array<{ id: number; title: string }> } =
+      await casesResponse.json()
+    const testCase = casePage.items.find((item) => item.title === title)
     if (testCase) {
       const deleteResponse = await request.delete(
         `${apiBaseUrl}/api/test-cases/${testCase.id}`,
@@ -75,18 +78,21 @@ test('creates, edits, reloads, and deletes a test case linked to multiple suites
 
   await openTestCases(page)
   await page.getByRole('button', { name: 'Create test case' }).click()
-  await page.getByLabel('Title').fill(originalTitle)
-  await page.getByLabel('Description').fill('Documents the checkout workflow.')
-  await page.getByLabel('Preconditions').fill('A product is available.')
-  await page.getByLabel('Test steps (one per line)').fill(
+  const caseForm = page.getByRole('form', { name: 'Test case form' })
+  await caseForm.getByLabel('Title').fill(originalTitle)
+  await caseForm.getByLabel('Description').fill('Documents the checkout workflow.')
+  await caseForm.getByLabel('Preconditions').fill('A product is available.')
+  await caseForm.getByLabel('Test steps (one per line)').fill(
     'Add the product to the cart\nComplete payment',
   )
-  await page.getByLabel('Expected result').fill('The order is confirmed.')
-  await page.getByLabel('Priority').selectOption('high')
-  await page.getByLabel('Test type').selectOption('automated')
-  await page.getByLabel('Status').selectOption('active')
-  await page.getByLabel('Tags (comma-separated)').fill('checkout, critical-path')
-  await page
+  await caseForm.getByLabel('Expected result').fill('The order is confirmed.')
+  await caseForm.getByLabel('Priority').selectOption('high')
+  await caseForm.getByLabel('Test type').selectOption('automated')
+  await caseForm.getByLabel('Status').selectOption('active')
+  await caseForm
+    .getByLabel('Tags (comma-separated)')
+    .fill('checkout, critical-path')
+  await caseForm
     .getByLabel('Test suites')
     .selectOption([String(firstSuiteId), String(secondSuiteId)])
 
@@ -95,7 +101,7 @@ test('creates, edits, reloads, and deletes a test case linked to multiple suites
       response.url().endsWith('/api/test-cases') &&
       response.request().method() === 'POST',
   )
-  await page.getByRole('button', { name: 'Create case' }).click()
+  await caseForm.getByRole('button', { name: 'Create case' }).click()
   expect((await createResponsePromise).status()).toBe(201)
 
   const createdRow = page.getByRole('row').filter({ hasText: originalTitle })
@@ -109,16 +115,16 @@ test('creates, edits, reloads, and deletes a test case linked to multiple suites
   await expect(createdRow).toContainText('The order is confirmed.')
 
   await createdRow.getByRole('button', { name: `Edit ${originalTitle}` }).click()
-  await page.getByLabel('Title').fill(updatedTitle)
-  await page.getByLabel('Priority').selectOption('medium')
-  await page.getByLabel('Test suites').selectOption(String(secondSuiteId))
+  await caseForm.getByLabel('Title').fill(updatedTitle)
+  await caseForm.getByLabel('Priority').selectOption('medium')
+  await caseForm.getByLabel('Test suites').selectOption(String(secondSuiteId))
 
   const updateResponsePromise = page.waitForResponse(
     (response) =>
       /\/api\/test-cases\/\d+$/.test(new URL(response.url()).pathname) &&
       response.request().method() === 'PATCH',
   )
-  await page.getByRole('button', { name: 'Save changes' }).click()
+  await caseForm.getByRole('button', { name: 'Save changes' }).click()
   expect((await updateResponsePromise).status()).toBe(200)
 
   const updatedRow = page.getByRole('row').filter({ hasText: updatedTitle })
@@ -156,4 +162,64 @@ test('validates required and whitespace-only test case titles', async ({ page })
   await titleInput.fill('   ')
   await page.getByRole('button', { name: 'Create case' }).click()
   await expect(page.getByRole('alert')).toHaveText('Title cannot be blank.')
+})
+
+test('searches, filters, and paginates test cases', async ({ page, request }) => {
+  const uniqueName = randomUUID()
+  const suiteName = `E2E filter suite ${uniqueName}`
+  suiteNamesToCleanUp.push(suiteName)
+  const suiteId = await createSuite(request, suiteName)
+
+  const titles = Array.from(
+    { length: 11 },
+    (_, index) => `E2E filter ${uniqueName} case ${index + 1}`,
+  )
+  caseTitlesToCleanUp.push(...titles)
+  const createResponses = await Promise.all(
+    titles.map((title, index) =>
+      request.post(`${apiBaseUrl}/api/test-cases`, {
+        data: {
+          title,
+          priority: index % 2 === 0 ? 'high' : 'low',
+          status: index % 2 === 0 ? 'active' : 'draft',
+          suite_ids: [suiteId],
+        },
+      }),
+    ),
+  )
+  expect(createResponses.every((response) => response.status() === 201)).toBe(true)
+
+  await openTestCases(page)
+  await page.getByLabel('Search test cases').fill(uniqueName)
+  await page.getByRole('button', { name: 'Apply filters' }).click()
+  await expect(page.getByRole('status')).toHaveText(
+    'Showing 1–10 of 11 test cases',
+  )
+  await expect(page.getByText('Page 1 of 2')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Next' }).click()
+  await expect(page.getByRole('status')).toHaveText(
+    'Showing 11–11 of 11 test cases',
+  )
+  await expect(page.getByRole('row')).toHaveCount(2)
+  await expect(page.getByText('Page 2 of 2')).toBeVisible()
+
+  await page.getByLabel('Filter by suite').selectOption(String(suiteId))
+  await page.getByLabel('Filter by priority').selectOption('high')
+  await page.getByLabel('Filter by status').selectOption('active')
+  await page.getByRole('button', { name: 'Apply filters' }).click()
+  await expect(page.getByRole('status')).toHaveText(
+    'Showing 1–6 of 6 test cases',
+  )
+  await expect(page.getByRole('row')).toHaveCount(7)
+
+  await page.getByLabel('Search test cases').fill(`${uniqueName}-missing`)
+  await page.getByRole('button', { name: 'Apply filters' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'No matching test cases' }),
+  ).toBeVisible()
+
+  await page.getByRole('button', { name: 'Clear filters' }).click()
+  await expect(page.getByLabel('Search test cases')).toHaveValue('')
+  await expect(page.getByLabel('Filter by suite')).toHaveValue('')
 })

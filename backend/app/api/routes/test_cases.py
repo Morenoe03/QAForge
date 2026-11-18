@@ -1,13 +1,18 @@
-from collections.abc import Sequence
-
-from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy import String, cast, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.test_case import TestCase
 from app.models.test_suite import TestSuite
-from app.schemas.test_case import TestCaseCreate, TestCaseRead, TestCaseUpdate
+from app.schemas.test_case import (
+    Priority,
+    TestCaseCreate,
+    TestCasePage,
+    TestCaseRead,
+    TestCaseStatus,
+    TestCaseUpdate,
+)
 
 router = APIRouter(
     prefix="/api/test-cases",
@@ -43,9 +48,51 @@ def _get_suites_or_404(db: Session, suite_ids: list[int]) -> list[TestSuite]:
     return [suites_by_id[suite_id] for suite_id in suite_ids]
 
 
-@router.get("", response_model=list[TestCaseRead])
-def list_test_cases(db: Session = Depends(get_db)) -> Sequence[TestCase]:
-    return db.scalars(select(TestCase).order_by(TestCase.id)).all()
+@router.get("", response_model=TestCasePage)
+def list_test_cases(
+    search: str | None = Query(default=None, max_length=200),
+    suite_id: int | None = Query(default=None, gt=0),
+    priority: Priority | None = None,
+    status: TestCaseStatus | None = None,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
+    db: Session = Depends(get_db),
+) -> TestCasePage:
+    statement = select(TestCase)
+    search_term = search.strip() if search else ""
+    if search_term:
+        pattern = f"%{search_term}%"
+        statement = statement.where(
+            or_(
+                TestCase.title.ilike(pattern),
+                TestCase.description.ilike(pattern),
+                TestCase.preconditions.ilike(pattern),
+                TestCase.expected_result.ilike(pattern),
+                cast(TestCase.steps, String).ilike(pattern),
+                cast(TestCase.tags, String).ilike(pattern),
+            )
+        )
+    if suite_id is not None:
+        statement = statement.where(
+            TestCase.suites.any(TestSuite.id == suite_id)
+        )
+    if priority is not None:
+        statement = statement.where(TestCase.priority == priority)
+    if status is not None:
+        statement = statement.where(TestCase.status == status)
+
+    total = db.scalar(select(func.count()).select_from(statement.subquery())) or 0
+    test_cases = db.scalars(
+        statement.order_by(TestCase.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    ).all()
+    return TestCasePage(
+        items=test_cases,
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get("/{case_id}", response_model=TestCaseRead)

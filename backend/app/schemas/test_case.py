@@ -151,3 +151,10 @@ class TestCaseRead(BaseModel):
     suite_ids: list[int]
     created_at: datetime
     updated_at: datetime
+
+
+class TestCasePage(BaseModel):
+    items: list[TestCaseRead]
+    total: int
+    page: int
+    page_size: int

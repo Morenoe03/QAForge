@@ -6,14 +6,33 @@ import {
   updateTestCase,
   type TestCase,
   type TestCaseInput,
+  type TestCaseQuery,
 } from '../../api/testCases'
 import { listTestSuites, type TestSuite } from '../../api/testSuites'
 
+type AppliedFilters = Pick<
+  TestCaseQuery,
+  'search' | 'suiteId' | 'priority' | 'status'
+>
+type TestCaseFilterForm = {
+  search: string
+  suiteId: string
+  priority: TestCaseInput['priority'] | ''
+  status: TestCaseInput['status'] | ''
+}
 type TestCaseForm = Omit<TestCaseInput, 'steps' | 'tags'> & {
   stepsText: string
   tagsText: string
 }
 
+const pageSize = 10
+const emptyFilters: AppliedFilters = {}
+const emptyFilterForm: TestCaseFilterForm = {
+  search: '',
+  suiteId: '',
+  priority: '',
+  status: '',
+}
 const emptyForm: TestCaseForm = {
   title: '',
   description: '',
@@ -68,7 +87,13 @@ function caseIdentifier(id: number): string {
 export default function TestCasesPage() {
   const [cases, setCases] = useState<TestCase[]>([])
   const [suites, setSuites] = useState<TestSuite[]>([])
-  const [loading, setLoading] = useState(true)
+  const [totalCases, setTotalCases] = useState(0)
+  const [page, setPage] = useState(1)
+  const [filters, setFilters] = useState<AppliedFilters>(emptyFilters)
+  const [filterForm, setFilterForm] =
+    useState<TestCaseFilterForm>(emptyFilterForm)
+  const [suitesLoading, setSuitesLoading] = useState(true)
+  const [casesLoading, setCasesLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
@@ -76,28 +101,85 @@ export default function TestCasesPage() {
   const [form, setForm] = useState<TestCaseForm>(emptyForm)
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()
-    void Promise.all([
-      listTestCases(controller.signal),
-      listTestSuites(controller.signal),
-    ])
-      .then(([testCases, testSuites]) => {
-        setCases(testCases)
-        setSuites(testSuites)
-      })
+    void listTestSuites(controller.signal)
+      .then(setSuites)
       .catch((error: unknown) => {
         if (!controller.signal.aborted) {
-          setLoadError(errorMessage(error, 'Could not load test cases.'))
+          setLoadError(errorMessage(error, 'Could not load test suites.'))
         }
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoading(false)
+        if (!controller.signal.aborted) setSuitesLoading(false)
       })
 
     return () => controller.abort()
   }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void listTestCases(
+      {
+        ...filters,
+        page,
+        pageSize,
+      },
+      controller.signal,
+    )
+      .then((result) => {
+        const lastPage = Math.max(1, Math.ceil(result.total / result.page_size))
+        if (page > lastPage) {
+          setCasesLoading(true)
+          setPage(lastPage)
+          return
+        }
+        setCases(result.items)
+        setTotalCases(result.total)
+        setCasesLoading(false)
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          setLoadError(errorMessage(error, 'Could not load test cases.'))
+          setCasesLoading(false)
+        }
+      })
+
+    return () => controller.abort()
+  }, [filters, page, refreshKey])
+
+  const loading = suitesLoading || casesLoading
+  const pageCount = Math.max(1, Math.ceil(totalCases / pageSize))
+  const firstItem = totalCases === 0 ? 0 : (page - 1) * pageSize + 1
+  const lastItem = Math.min(page * pageSize, totalCases)
+  const hasFilters = Boolean(
+    filters.search || filters.suiteId || filters.priority || filters.status,
+  )
+
+  function applyFilters(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setLoadError(null)
+    setCasesLoading(true)
+    setPage(1)
+    setFilters({
+      search: filterForm.search.trim() || undefined,
+      suiteId: filterForm.suiteId ? Number(filterForm.suiteId) : undefined,
+      priority: filterForm.priority || undefined,
+      status: filterForm.status || undefined,
+    })
+  }
+
+  function clearFilters() {
+    const filtersChanged =
+      filters.search || filters.suiteId || filters.priority || filters.status
+    setFilterForm(emptyFilterForm)
+    setFilters(emptyFilters)
+    setPage(1)
+    setLoadError(null)
+    if (filtersChanged || page !== 1) setCasesLoading(true)
+  }
 
   function openCreateForm() {
     setEditingCase(null)
@@ -144,17 +226,14 @@ export default function TestCasesPage() {
 
     try {
       if (editingCase) {
-        const updated = await updateTestCase(editingCase.id, input)
-        setCases((current) =>
-          current.map((testCase) =>
-            testCase.id === updated.id ? updated : testCase,
-          ),
-        )
+        await updateTestCase(editingCase.id, input)
       } else {
-        const created = await createTestCase(input)
-        setCases((current) => [...current, created].sort((a, b) => a.id - b.id))
+        await createTestCase(input)
       }
       closeForm()
+      setLoadError(null)
+      setCasesLoading(true)
+      setRefreshKey((current) => current + 1)
     } catch (error) {
       setFormError(errorMessage(error, 'Could not save the test case.'))
     } finally {
@@ -169,7 +248,8 @@ export default function TestCasesPage() {
     setLoadError(null)
     try {
       await deleteTestCase(testCase.id)
-      setCases((current) => current.filter((item) => item.id !== testCase.id))
+      setCasesLoading(true)
+      setRefreshKey((current) => current + 1)
     } catch (error) {
       setLoadError(errorMessage(error, 'Could not delete the test case.'))
     } finally {
@@ -208,8 +288,109 @@ export default function TestCasesPage() {
         </p>
       )}
 
+      <form
+        className="test-case-filters"
+        aria-label="Search and filter test cases"
+        onSubmit={applyFilters}
+      >
+        <label>
+          Search test cases
+          <input
+            type="search"
+            maxLength={200}
+            placeholder="Title, steps, tags…"
+            value={filterForm.search}
+            onChange={(event) =>
+              setFilterForm((current) => ({
+                ...current,
+                search: event.target.value,
+              }))
+            }
+          />
+        </label>
+        <label>
+          Filter by suite
+          <select
+            value={filterForm.suiteId}
+            onChange={(event) =>
+              setFilterForm((current) => ({
+                ...current,
+                suiteId: event.target.value,
+              }))
+            }
+          >
+            <option value="">All suites</option>
+            {suites.map((suite) => (
+              <option key={suite.id} value={suite.id}>
+                {suite.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Filter by priority
+          <select
+            value={filterForm.priority}
+            onChange={(event) => {
+              const priority = priorities.find(
+                (option) => option === event.target.value,
+              )
+              setFilterForm((current) => ({
+                ...current,
+                priority: priority ?? '',
+              }))
+            }}
+          >
+            <option value="">All priorities</option>
+            {priorities.map((priority) => (
+              <option key={priority} value={priority}>
+                {priority}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Filter by status
+          <select
+            value={filterForm.status}
+            onChange={(event) => {
+              const testCaseStatus = testCaseStatuses.find(
+                (option) => option === event.target.value,
+              )
+              setFilterForm((current) => ({
+                ...current,
+                status: testCaseStatus ?? '',
+              }))
+            }}
+          >
+            <option value="">All statuses</option>
+            {testCaseStatuses.map((testCaseStatus) => (
+              <option key={testCaseStatus} value={testCaseStatus}>
+                {testCaseStatus}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="test-case-filter-actions">
+          <button type="submit" className="workspace-primary-action">
+            Apply filters
+          </button>
+          <button
+            type="button"
+            className="suite-secondary-action"
+            onClick={clearFilters}
+          >
+            Clear filters
+          </button>
+        </div>
+      </form>
+
       {formOpen && (
-        <form className="suite-form" onSubmit={handleSubmit}>
+        <form
+          className="suite-form"
+          aria-label="Test case form"
+          onSubmit={handleSubmit}
+        >
           <h2>{formTitle}</h2>
           <label>
             Title
@@ -400,8 +581,12 @@ export default function TestCasesPage() {
           <div className="workspace-empty-icon" aria-hidden="true">
             +
           </div>
-          <h2>No test cases yet</h2>
-          <p>Create a test case to document a scenario and link it to suites.</p>
+          <h2>{hasFilters ? 'No matching test cases' : 'No test cases yet'}</h2>
+          <p>
+            {hasFilters
+              ? 'Try changing or clearing your search and filters.'
+              : 'Create a test case to document a scenario and link it to suites.'}
+          </p>
         </section>
       ) : (
         <section className="suite-table-card" aria-label="Test cases">
@@ -504,6 +689,41 @@ export default function TestCasesPage() {
             </table>
           </div>
         </section>
+      )}
+
+      {!loading && totalCases > 0 && (
+        <nav className="test-case-pagination" aria-label="Test case pagination">
+          <span role="status">
+            Showing {firstItem}–{lastItem} of {totalCases} test cases
+          </span>
+          <div className="test-case-pagination-controls">
+            <button
+              type="button"
+              className="suite-secondary-action"
+              onClick={() => {
+                setCasesLoading(true)
+                setPage((current) => Math.max(1, current - 1))
+              }}
+              disabled={page <= 1}
+            >
+              Previous
+            </button>
+            <span>
+              Page {page} of {pageCount}
+            </span>
+            <button
+              type="button"
+              className="suite-secondary-action"
+              onClick={() => {
+                setCasesLoading(true)
+                setPage((current) => Math.min(pageCount, current + 1))
+              }}
+              disabled={page >= pageCount}
+            >
+              Next
+            </button>
+          </div>
+        </nav>
       )}
     </main>
   )
