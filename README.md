@@ -87,7 +87,9 @@ description, preconditions, steps, expected result, priority, type, status, and
 tags. Cases may be linked to multiple Test Suites; deleting a suite removes its
 link without deleting the reusable case. The list endpoint supports `search`,
 `suite_id`, `priority`, `status`, `page`, and `page_size` query parameters and
-returns the matching items with pagination metadata.
+returns the matching items with pagination metadata. Each create, update, and
+delete appends a versioned snapshot available from
+`/api/test-cases/{case_id}/history`.
 
 ## Frontend Commands
 

@@ -4,6 +4,7 @@ export type TestCaseStatus = 'draft' | 'active' | 'deprecated'
 
 export interface TestCase {
   id: number
+  version: number
   title: string
   description: string | null
   preconditions: string | null
@@ -36,6 +37,15 @@ export interface TestCasePage {
   total: number
   page: number
   page_size: number
+}
+
+export interface TestCaseHistory {
+  id: number
+  test_case_id: number
+  version: number
+  change_type: 'created' | 'updated' | 'deleted'
+  snapshot: TestCase
+  created_at: string
 }
 
 export interface TestCaseQuery {
@@ -80,6 +90,17 @@ export async function listTestCases(
   const response = await fetch(`${apiBaseUrl}/api/test-cases?${params}`, { signal })
   await throwForFailedResponse(response)
   return response.json() as Promise<TestCasePage>
+}
+
+export async function listTestCaseHistory(
+  id: number,
+  signal?: AbortSignal,
+): Promise<TestCaseHistory[]> {
+  const response = await fetch(`${apiBaseUrl}/api/test-cases/${id}/history`, {
+    signal,
+  })
+  await throwForFailedResponse(response)
+  return response.json() as Promise<TestCaseHistory[]>
 }
 
 export async function createTestCase(input: TestCaseInput): Promise<TestCase> {

@@ -132,11 +132,38 @@ test('creates, edits, reloads, and deletes a test case linked to multiple suites
   await expect(updatedRow).not.toContainText(firstSuiteName)
   await expect(updatedRow).toContainText('medium')
 
+  await updatedRow.getByRole('button', { name: `History for ${updatedTitle}` }).click()
+  const historyPanelBeforeReload = page.getByRole('region', {
+    name: `Case history for ${updatedTitle}`,
+  })
+  await expect(historyPanelBeforeReload).toContainText('Version 2 · updated')
+  await expect(historyPanelBeforeReload).toContainText('Version 1 · created')
+  await expect(historyPanelBeforeReload).toContainText(originalTitle)
+  await historyPanelBeforeReload
+    .getByRole('button', { name: 'Close history' })
+    .click()
+  await expect(historyPanelBeforeReload).toHaveCount(0)
+
   await page.reload()
   await page.getByRole('link', { name: 'Test Cases' }).click()
   const persistedRow = page.getByRole('row').filter({ hasText: updatedTitle })
   await expect(persistedRow).toContainText('Documents the checkout workflow.')
   await expect(persistedRow).toContainText(secondSuiteName)
+  await expect(persistedRow.getByRole('cell', { name: '2', exact: true })).toBeVisible()
+
+  await persistedRow
+    .getByRole('button', { name: `History for ${updatedTitle}` })
+    .click()
+  const historyPanelAfterReload = page.getByRole('region', {
+    name: `Case history for ${updatedTitle}`,
+  })
+  await expect(historyPanelAfterReload).toContainText('Version 2 · updated')
+  await expect(historyPanelAfterReload).toContainText('Version 1 · created')
+  await expect(historyPanelAfterReload).toContainText(originalTitle)
+  await historyPanelAfterReload
+    .getByRole('button', { name: 'Close history' })
+    .click()
+  await expect(historyPanelAfterReload).toHaveCount(0)
 
   page.once('dialog', (dialog) => dialog.accept())
   const deleteResponsePromise = page.waitForResponse(
@@ -162,6 +189,8 @@ test('validates required and whitespace-only test case titles', async ({ page })
   await titleInput.fill('   ')
   await page.getByRole('button', { name: 'Create case' }).click()
   await expect(page.getByRole('alert')).toHaveText('Title cannot be blank.')
+  await page.getByRole('button', { name: 'Cancel' }).click()
+  await expect(page.getByRole('form', { name: 'Test case form' })).toHaveCount(0)
 })
 
 test('searches, filters, and paginates test cases', async ({ page, request }) => {
@@ -190,6 +219,7 @@ test('searches, filters, and paginates test cases', async ({ page, request }) =>
   expect(createResponses.every((response) => response.status() === 201)).toBe(true)
 
   await openTestCases(page)
+  await page.setViewportSize({ width: 900, height: 600 })
   await page.getByLabel('Search test cases').fill(uniqueName)
   await page.getByRole('button', { name: 'Apply filters' }).click()
   await expect(page.getByRole('status')).toHaveText(
@@ -197,11 +227,47 @@ test('searches, filters, and paginates test cases', async ({ page, request }) =>
   )
   await expect(page.getByText('Page 1 of 2')).toBeVisible()
 
+  const tableScroll = page.locator('.test-case-table-scroll')
+  const horizontalMetrics = await tableScroll.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    overflowX: getComputedStyle(element).overflowX,
+    scrollWidth: element.scrollWidth,
+  }))
+  expect(horizontalMetrics.overflowX).toBe('auto')
+  expect(horizontalMetrics.scrollWidth).toBeGreaterThan(
+    horizontalMetrics.clientWidth,
+  )
+  await tableScroll.evaluate((element) => {
+    element.scrollLeft = element.scrollWidth
+  })
+  expect(
+    await tableScroll.evaluate((element) => element.scrollLeft),
+  ).toBeGreaterThan(0)
+
+  const workspace = page.locator('.workspace-page')
+  await expect
+    .poll(() =>
+      workspace.evaluate((element) => element.scrollHeight > element.clientHeight),
+    )
+    .toBe(true)
+  await workspace.evaluate((element) => {
+    element.scrollTop = element.scrollHeight
+  })
+  expect(
+    await workspace.evaluate((element) => element.scrollTop),
+  ).toBeGreaterThan(0)
+
   await page.getByRole('button', { name: 'Next' }).click()
   await expect(page.getByRole('status')).toHaveText(
     'Showing 11–11 of 11 test cases',
   )
   await expect(page.getByRole('row')).toHaveCount(2)
+  await expect(page.getByText('Page 2 of 2')).toBeVisible()
+  await page.getByRole('button', { name: 'Previous' }).click()
+  await expect(page.getByRole('status')).toHaveText(
+    'Showing 1–10 of 11 test cases',
+  )
+  await page.getByRole('button', { name: 'Next' }).click()
   await expect(page.getByText('Page 2 of 2')).toBeVisible()
 
   await page.getByLabel('Filter by suite').selectOption(String(suiteId))

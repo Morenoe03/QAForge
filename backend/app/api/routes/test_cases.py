@@ -4,10 +4,12 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.test_case import TestCase
+from app.models.test_case_history import TestCaseHistory
 from app.models.test_suite import TestSuite
 from app.schemas.test_case import (
     Priority,
     TestCaseCreate,
+    TestCaseHistoryRead,
     TestCasePage,
     TestCaseRead,
     TestCaseStatus,
@@ -46,6 +48,22 @@ def _get_suites_or_404(db: Session, suite_ids: list[int]) -> list[TestSuite]:
             detail="One or more test suites were not found.",
         )
     return [suites_by_id[suite_id] for suite_id in suite_ids]
+
+
+def _record_history(
+    db: Session,
+    test_case: TestCase,
+    change_type: str,
+) -> None:
+    snapshot = TestCaseRead.model_validate(test_case).model_dump(mode="json")
+    db.add(
+        TestCaseHistory(
+            test_case_id=test_case.id,
+            version=test_case.version,
+            change_type=change_type,
+            snapshot=snapshot,
+        )
+    )
 
 
 @router.get("", response_model=TestCasePage)
@@ -95,6 +113,24 @@ def list_test_cases(
     )
 
 
+@router.get("/{case_id}/history", response_model=list[TestCaseHistoryRead])
+def list_test_case_history(
+    case_id: int,
+    db: Session = Depends(get_db),
+) -> list[TestCaseHistory]:
+    history = db.scalars(
+        select(TestCaseHistory)
+        .where(TestCaseHistory.test_case_id == case_id)
+        .order_by(TestCaseHistory.version.desc())
+    ).all()
+    if not history:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Test case history not found.",
+        )
+    return history
+
+
 @router.get("/{case_id}", response_model=TestCaseRead)
 def get_test_case(
     case_id: int,
@@ -116,6 +152,9 @@ def create_test_case(
     test_case = TestCase(**case_data)
     test_case.suites = _get_suites_or_404(db, payload.suite_ids)
     db.add(test_case)
+    db.flush()
+    db.refresh(test_case)
+    _record_history(db, test_case, "created")
     db.commit()
     db.refresh(test_case)
     return test_case
@@ -134,6 +173,10 @@ def update_test_case(
     for field, value in changes.items():
         setattr(test_case, field, value)
 
+    test_case.version += 1
+    db.flush()
+    db.refresh(test_case)
+    _record_history(db, test_case, "updated")
     db.commit()
     db.refresh(test_case)
     return test_case
@@ -142,6 +185,10 @@ def update_test_case(
 @router.delete("/{case_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_test_case(case_id: int, db: Session = Depends(get_db)) -> Response:
     test_case = _get_test_case_or_404(db, case_id)
+    test_case.version += 1
+    db.flush()
+    db.refresh(test_case)
+    _record_history(db, test_case, "deleted")
     db.delete(test_case)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

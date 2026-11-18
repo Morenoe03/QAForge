@@ -116,6 +116,7 @@
 .app-content {
   display: flex;
   min-width: 0;
+  min-height: 0;
   width: 100%;
   flex: 1 1 auto;
   flex-direction: column;
@@ -139,7 +140,10 @@
 .workspace-page {
   flex: 1 1 auto;
   min-width: 0;
-  min-height: calc(100vh - 88px);
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
   padding: 52px clamp(24px, 5vw, 72px) 64px;
   background:
     radial-gradient(circle at 90% 0%, rgba(35, 126, 255, 0.1), transparent 28rem),
@@ -391,6 +395,53 @@
   padding-left: 24px;
 }
 
+.test-case-table {
+  min-width: 1100px;
+}
+
+.test-case-history-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.test-case-history-heading h2 {
+  margin: 0;
+  color: #172338;
+  font-size: 20px;
+}
+
+.test-case-history-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding-left: 24px;
+}
+
+.test-case-history-list summary {
+  color: #175cd3;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.test-case-history-list dl {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.35fr) 1fr;
+  gap: 8px 16px;
+  margin: 12px 0;
+  overflow-wrap: anywhere;
+}
+
+.test-case-history-list dt {
+  font-weight: 700;
+}
+
+.test-case-history-list dd {
+  margin: 0;
+}
+
 .suite-form-actions,
 .suite-row-actions {
   display: flex;
@@ -551,6 +602,15 @@
   color: #aeb9ca;
 }
 
+.app-layout.dark-mode .test-case-history-heading h2,
+.app-layout.dark-mode .test-case-history-list dd {
+  color: #f8fafc;
+}
+
+.app-layout.dark-mode .test-case-history-list dt {
+  color: #aeb9ca;
+}
+
 .app-layout.dark-mode .suite-form input,
 .app-layout.dark-mode .suite-form textarea,
 .app-layout.dark-mode .suite-form select,
@@ -583,6 +643,16 @@
   .suite-form,
   .suite-table-card {
     padding: 16px;
+  }
+
+  .test-case-history-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .test-case-history-list dl {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 }
 

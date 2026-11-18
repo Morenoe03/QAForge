@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, JSON, String, Text, func
+from sqlalchemy import DateTime, Integer, JSON, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -13,6 +13,11 @@ class TestCase(Base):
     __tablename__ = "test_cases"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    version: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
+        server_default="1",
+    )
     title: Mapped[str] = mapped_column(String(200))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     preconditions: Mapped[str | None] = mapped_column(Text, nullable=True)

@@ -139,6 +139,7 @@ class TestCaseRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    version: int
     title: str
     description: str | None
     preconditions: str | None
@@ -158,3 +159,14 @@ class TestCasePage(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class TestCaseHistoryRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    test_case_id: int
+    version: int
+    change_type: Literal["created", "updated", "deleted"]
+    snapshot: dict[str, object]
+    created_at: datetime

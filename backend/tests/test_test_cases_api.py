@@ -32,6 +32,7 @@ def test_test_case_crud_and_suite_associations(client):
     assert create_response.status_code == 201
     created_case = create_response.json()
     case_id = created_case["id"]
+    assert created_case["version"] == 1
     assert created_case["steps"] == [
         "Add the product to the cart",
         "Complete payment",
@@ -54,6 +55,7 @@ def test_test_case_crud_and_suite_associations(client):
     assert update_response.status_code == 200
     assert update_response.json()["title"] == "Checkout with a saved card"
     assert update_response.json()["suite_ids"] == [second_suite["id"]]
+    assert update_response.json()["version"] == 2
 
     read_response = client.get(f"/api/test-cases/{case_id}")
     assert read_response.status_code == 200
@@ -62,6 +64,14 @@ def test_test_case_crud_and_suite_associations(client):
     delete_response = client.delete(f"/api/test-cases/{case_id}")
     assert delete_response.status_code == 204
     assert client.get(f"/api/test-cases/{case_id}").status_code == 404
+    history_response = client.get(f"/api/test-cases/{case_id}/history")
+    assert history_response.status_code == 200
+    assert [entry["change_type"] for entry in history_response.json()] == [
+        "deleted",
+        "updated",
+        "created",
+    ]
+    assert history_response.json()[1]["snapshot"]["title"] == "Checkout with a saved card"
 
 
 def test_test_case_validation_and_missing_suite(client):
@@ -99,6 +109,8 @@ def test_test_case_update_requires_changes_and_preserves_case_on_bad_suite(clien
     assert empty_update_response.status_code == 422
     assert invalid_suite_update_response.status_code == 404
     assert client.get(f"/api/test-cases/{case_id}").json()["suite_ids"] == []
+    assert client.get(f"/api/test-cases/{case_id}/history").status_code == 200
+    assert client.get("/api/test-cases/9999/history").status_code == 404
 
 
 def test_deleting_suite_keeps_test_case_and_removes_link(client):

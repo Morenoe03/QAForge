@@ -1,10 +1,12 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import {
   createTestCase,
   deleteTestCase,
+  listTestCaseHistory,
   listTestCases,
   updateTestCase,
   type TestCase,
+  type TestCaseHistory,
   type TestCaseInput,
   type TestCaseQuery,
 } from '../../api/testCases'
@@ -102,6 +104,11 @@ export default function TestCasesPage() {
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [historyCase, setHistoryCase] = useState<TestCase | null>(null)
+  const [history, setHistory] = useState<TestCaseHistory[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState<string | null>(null)
+  const historyRequest = useRef<AbortController | null>(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -150,6 +157,11 @@ export default function TestCasesPage() {
     return () => controller.abort()
   }, [filters, page, refreshKey])
 
+  useEffect(
+    () => () => historyRequest.current?.abort(),
+    [],
+  )
+
   const loading = suitesLoading || casesLoading
   const pageCount = Math.max(1, Math.ceil(totalCases / pageSize))
   const firstItem = totalCases === 0 ? 0 : (page - 1) * pageSize + 1
@@ -179,6 +191,35 @@ export default function TestCasesPage() {
     setPage(1)
     setLoadError(null)
     if (filtersChanged || page !== 1) setCasesLoading(true)
+  }
+
+  async function showHistory(testCase: TestCase) {
+    historyRequest.current?.abort()
+    const controller = new AbortController()
+    historyRequest.current = controller
+    setHistoryCase(testCase)
+    setHistory([])
+    setHistoryError(null)
+    setHistoryLoading(true)
+
+    try {
+      const entries = await listTestCaseHistory(testCase.id, controller.signal)
+      if (!controller.signal.aborted) setHistory(entries)
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        setHistoryError(errorMessage(error, 'Could not load test case history.'))
+      }
+    } finally {
+      if (!controller.signal.aborted) setHistoryLoading(false)
+    }
+  }
+
+  function closeHistory() {
+    historyRequest.current?.abort()
+    setHistoryCase(null)
+    setHistory([])
+    setHistoryError(null)
+    setHistoryLoading(false)
   }
 
   function openCreateForm() {
@@ -572,6 +613,70 @@ export default function TestCasesPage() {
         </form>
       )}
 
+      {historyCase && (
+        <section
+          className="suite-table-card test-case-history"
+          aria-label={`Case history for ${historyCase.title}`}
+        >
+          <div className="test-case-history-heading">
+            <h2>History: {historyCase.title}</h2>
+            <button
+              type="button"
+              className="suite-secondary-action"
+              onClick={closeHistory}
+            >
+              Close history
+            </button>
+          </div>
+          {historyLoading && <p role="status">Loading case history…</p>}
+          {historyError && (
+            <p className="suite-alert" role="alert">
+              {historyError}
+            </p>
+          )}
+          {!historyLoading && !historyError && history.length === 0 && (
+            <p>No history is available for this test case.</p>
+          )}
+          {history.length > 0 && (
+            <ol className="test-case-history-list">
+              {history.map((entry) => (
+                <li key={entry.id}>
+                  <details>
+                    <summary>
+                      Version {entry.version} · {entry.change_type} ·{' '}
+                      {new Date(entry.created_at).toLocaleString()}
+                    </summary>
+                    <dl>
+                      <dt>Title</dt>
+                      <dd>{entry.snapshot.title}</dd>
+                      <dt>Description</dt>
+                      <dd>{entry.snapshot.description || '—'}</dd>
+                      <dt>Preconditions</dt>
+                      <dd>{entry.snapshot.preconditions || '—'}</dd>
+                      <dt>Steps</dt>
+                      <dd>
+                        {entry.snapshot.steps.length > 0
+                          ? entry.snapshot.steps.join('; ')
+                          : '—'}
+                      </dd>
+                      <dt>Expected result</dt>
+                      <dd>{entry.snapshot.expected_result || '—'}</dd>
+                      <dt>Priority / type / status</dt>
+                      <dd>
+                        {entry.snapshot.priority} / {entry.snapshot.test_type} /{' '}
+                        {entry.snapshot.status}
+                      </dd>
+                      <dt>Tags</dt>
+                      <dd>{entry.snapshot.tags.join(', ') || '—'}</dd>
+                    </dl>
+                  </details>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      )}
+
       {loading ? (
         <section className="workspace-empty-state" aria-live="polite">
           <p>Loading test cases…</p>
@@ -590,12 +695,13 @@ export default function TestCasesPage() {
         </section>
       ) : (
         <section className="suite-table-card" aria-label="Test cases">
-          <div className="suite-table-scroll">
-            <table className="suite-table">
+          <div className="suite-table-scroll test-case-table-scroll">
+            <table className="suite-table test-case-table">
               <thead>
                 <tr>
                   <th scope="col">ID</th>
                   <th scope="col">Test case</th>
+                  <th scope="col">Version</th>
                   <th scope="col">Details</th>
                   <th scope="col">Priority</th>
                   <th scope="col">Type</th>
@@ -627,6 +733,7 @@ export default function TestCasesPage() {
                           </span>
                         )}
                       </th>
+                      <td>{testCase.version}</td>
                       <td>
                         <details className="test-case-details">
                           <summary>View details</summary>
@@ -664,6 +771,15 @@ export default function TestCasesPage() {
                       <td>{testCase.tags.join(', ') || '—'}</td>
                       <td>{new Date(testCase.updated_at).toLocaleDateString()}</td>
                       <td className="suite-row-actions">
+                        <button
+                          type="button"
+                          className="suite-text-action"
+                          onClick={() => void showHistory(testCase)}
+                          aria-label={`History for ${testCase.title}`}
+                          disabled={historyLoading}
+                        >
+                          History
+                        </button>
                         <button
                           type="button"
                           className="suite-text-action"
