@@ -4,10 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.auth import get_authenticated_user
 from app.core.database import get_db
 from app.models.test_case import TestCase
 from app.models.test_run import TestRun, TestRunResult
 from app.models.test_suite import TestSuite
+from app.models.user import User
 from app.schemas.test_run import (
     FailureRead,
     TestRunCreate,
@@ -33,10 +35,15 @@ def _elapsed_seconds(started_at: datetime, completed_at: datetime) -> int:
 
 
 @router.get("/api/test-runs", response_model=list[TestRunRead])
-def list_test_runs(db: Session = Depends(get_db)) -> list[TestRun]:
+def list_test_runs(
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> list[TestRun]:
     return list(
         db.scalars(
-            select(TestRun).order_by(TestRun.created_at.desc(), TestRun.id.desc())
+            select(TestRun)
+            .where(TestRun.user_id == user.id)
+            .order_by(TestRun.created_at.desc(), TestRun.id.desc())
         ).all()
     )
 
@@ -48,9 +55,15 @@ def list_test_runs(db: Session = Depends(get_db)) -> list[TestRun]:
 )
 def create_test_run(
     payload: TestRunCreate,
+    user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db),
 ) -> TestRun:
-    suite = db.get(TestSuite, payload.suite_id)
+    suite = db.scalar(
+        select(TestSuite).where(
+            TestSuite.id == payload.suite_id,
+            TestSuite.user_id == user.id,
+        )
+    )
     if suite is None:
         raise _not_found("Test suite not found.")
     if suite.status != "active":
@@ -62,6 +75,7 @@ def create_test_run(
     test_cases = db.scalars(
         select(TestCase)
         .where(
+            TestCase.user_id == user.id,
             TestCase.suites.any(TestSuite.id == suite.id),
             TestCase.status == "active",
         )
@@ -70,10 +84,18 @@ def create_test_run(
     if not test_cases:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="The selected suite has no active test cases.",
+            detail=(
+                "The selected suite has no active test cases. Link an active "
+                "test case to this suite before starting a run."
+            ),
         )
 
-    run = TestRun(name=payload.name, suite_id=suite.id, suite_name=suite.name)
+    run = TestRun(
+        user_id=user.id,
+        name=payload.name,
+        suite_id=suite.id,
+        suite_name=suite.name,
+    )
     run.results = [
         TestRunResult(
             test_case_id=test_case.id,
@@ -103,9 +125,15 @@ def record_test_run_result(
     run_id: int,
     result_id: int,
     payload: TestRunResultUpdate,
+    user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db),
 ) -> TestRun:
-    run = db.get(TestRun, run_id)
+    run = db.scalar(
+        select(TestRun).where(
+            TestRun.id == run_id,
+            TestRun.user_id == user.id,
+        )
+    )
     if run is None:
         raise _not_found("Test run not found.")
     if run.status == "completed":
@@ -134,8 +162,17 @@ def record_test_run_result(
 
 
 @router.delete("/api/test-runs/{run_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_test_run(run_id: int, db: Session = Depends(get_db)) -> Response:
-    run = db.get(TestRun, run_id)
+def delete_test_run(
+    run_id: int,
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> Response:
+    run = db.scalar(
+        select(TestRun).where(
+            TestRun.id == run_id,
+            TestRun.user_id == user.id,
+        )
+    )
     if run is None:
         raise _not_found("Test run not found.")
     db.delete(run)
@@ -144,11 +181,17 @@ def delete_test_run(run_id: int, db: Session = Depends(get_db)) -> Response:
 
 
 @router.get("/api/failures", response_model=list[FailureRead])
-def list_failures(db: Session = Depends(get_db)) -> list[dict[str, object]]:
+def list_failures(
+    user: User = Depends(get_authenticated_user),
+    db: Session = Depends(get_db),
+) -> list[dict[str, object]]:
     failures = db.execute(
         select(TestRunResult, TestRun)
         .join(TestRun, TestRun.id == TestRunResult.run_id)
-        .where(TestRunResult.outcome == "failed")
+        .where(
+            TestRunResult.outcome == "failed",
+            TestRun.user_id == user.id,
+        )
         .order_by(TestRunResult.recorded_at.desc(), TestRunResult.id.desc())
     ).all()
     return [

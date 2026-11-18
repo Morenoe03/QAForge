@@ -75,10 +75,19 @@ test('creates, edits, reloads, and deletes a test case linked to multiple suites
 
   const firstSuiteId = await createSuite(request, firstSuiteName)
   const secondSuiteId = await createSuite(request, secondSuiteName)
+  const suitesResponse = await request.get(`${apiBaseUrl}/api/test-suites`)
+  expect(suitesResponse.ok()).toBeTruthy()
+  const availableSuites: Array<{ id: number; status: string }> =
+    await suitesResponse.json()
+  const defaultSuite = availableSuites.find((suite) => suite.status === 'active')
+  expect(defaultSuite).toBeDefined()
 
   await openTestCases(page)
   await page.getByRole('button', { name: 'Create test case' }).click()
   const caseForm = page.getByRole('form', { name: 'Test case form' })
+  await expect(caseForm.getByLabel('Test suites')).toHaveValues([
+    String(defaultSuite?.id),
+  ])
   await caseForm.getByLabel('Title').fill(originalTitle)
   await caseForm.getByLabel('Description').fill('Documents the checkout workflow.')
   await caseForm.getByLabel('Preconditions').fill('A product is available.')

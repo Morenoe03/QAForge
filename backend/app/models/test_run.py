@@ -12,6 +12,10 @@ class TestRun(Base):
     __tablename__ = "test_runs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+    )
     name: Mapped[str] = mapped_column(String(150))
     suite_id: Mapped[int | None] = mapped_column(
         ForeignKey("test_suites.id", ondelete="SET NULL"),

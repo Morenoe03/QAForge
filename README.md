@@ -80,23 +80,30 @@ npm run dev
 
 Vite will print the local URL, usually `http://localhost:5173`.
 
-### Login and Settings
+### Accounts, Login, and Settings
 
-QAForge includes one local demo account, created in PostgreSQL at its first
-successful sign-in:
+QAForge includes a local demo account and a Create account option on the login
+screen. Each account has an isolated workspace for test suites, test cases,
+runs, API tests, defects, and dashboard data. Existing data is assigned to the
+demo account when the workspace-isolation migration is applied. The demo
+account is initialized by that migration, so set any custom demo credentials
+before applying migrations to a fresh database.
+
+Local demo credentials:
 
 - Username: `su`
 - Password: `su`
 
-Sign in through the frontend. The account menu opens Account and Settings, where
-the profile can be updated and the light/dark theme selected. Profile changes
-are saved in PostgreSQL; the theme preference is saved in that browser. Signing
-out clears the session. All `/api` endpoints other than `/api/auth/*` require an
-authenticated session.
+New users can create an account with a display name, email, username, and
+password of at least eight characters. The account menu opens Account and
+Settings, where the profile can be updated and the light/dark theme selected.
+Profile changes are saved in PostgreSQL; the theme preference is saved in that
+browser. Signing out clears the session. All `/api` endpoints other than
+`/api/auth/*` require an authenticated session.
 
 The demo credentials are deliberately simple and **not suitable for a publicly
-reachable deployment**. To configure the account before its first sign-in and
-provide a stable session key, set these values in the project `.env`:
+reachable deployment**. To configure them for a fresh database and provide a
+stable session key, set these values in the project `.env`:
 
 ```env
 QAFORGE_DEMO_USERNAME=su
@@ -106,10 +113,10 @@ QAFORGE_SESSION_COOKIE_SECURE=false
 ```
 
 For HTTPS deployments, set `QAFORGE_SESSION_COOKIE_SECURE=true` and replace the
-demo credentials with a strong username and password before the account is
-created. The demo app intentionally supports a single shared account; it does
-not provide account registration or per-user data isolation. If no session key
-is configured, the backend generates a temporary one at startup and existing
+demo credentials with a strong username and password before migrating a fresh
+database. Self-service registration
+does not include email verification or password recovery. If no session key is
+configured, the backend generates a temporary one at startup and existing
 sessions are invalidated when it restarts.
 
 ## Backend API
@@ -131,8 +138,10 @@ returns the matching items with pagination metadata. Each create, update, and
 delete appends a versioned snapshot available from
 `/api/test-cases/{case_id}/history`.
 
-Test Runs are created from an active suite and snapshot its active cases. Record
-each result as passed, failed, blocked, or skipped through
+Test Runs are created from an active suite and snapshot its active test cases
+that are linked to that suite. New test cases default to the first active suite;
+cases can be assigned to multiple suites. Record each result as passed, failed,
+blocked, or skipped through
 `PATCH /api/test-runs/{run_id}/results/{result_id}`. Runs complete when every
 case has a recorded outcome; run results remain available until the run is
 deleted. The Failures page is derived from failed run results through
@@ -149,8 +158,9 @@ API Tests are stored request definitions with manually recorded outcomes.
 QAForge does not send requests to the documented endpoints.
 
 The Pipelines page reads the latest GitHub Actions runs for one configured
-workflow and can dispatch it on a server-configured ref. Set the following in
-the project `.env`:
+workflow and can dispatch it on a server-configured ref. This integration is
+configured for the whole application, not per user. Set the following in the
+project `.env`:
 
 ```env
 GITHUB_ACTIONS_REPOSITORY=owner/repository
@@ -161,9 +171,8 @@ GITHUB_ACTIONS_ALLOW_DISPATCH=true
 ```
 
 The token needs Actions read/write permission and stays on the backend. Dispatch
-is disabled unless explicitly enabled. Since this application does not yet
-authenticate users, only enable dispatch for a trusted local or private
-instance.
+is disabled unless explicitly enabled. Only enable dispatch for trusted users
+and deployments.
 
 ## Frontend Commands
 

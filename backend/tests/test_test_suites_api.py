@@ -49,6 +49,23 @@ def test_create_rejects_invalid_test_suite_payloads(client):
     assert blank_name_response.status_code == 422
 
 
+def test_suite_names_are_unique_within_a_workspace(client):
+    assert client.post(
+        "/api/test-suites",
+        json={"name": "Workspace suite"},
+    ).status_code == 201
+
+    duplicate_response = client.post(
+        "/api/test-suites",
+        json={"name": "Workspace suite"},
+    )
+
+    assert duplicate_response.status_code == 409
+    assert duplicate_response.json()["detail"] == (
+        "A test suite with this name already exists."
+    )
+
+
 def test_update_rejects_empty_payload(client):
     create_response = client.post(
         "/api/test-suites",

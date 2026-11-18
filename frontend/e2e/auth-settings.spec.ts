@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 
 const apiBaseUrl = process.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
@@ -70,4 +71,43 @@ test('saves account settings and signs out and back in', async ({ page }) => {
   await page.getByLabel('Password').fill('su')
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(page.getByRole('button', { name: /Account menu for QAForge Demo/ })).toBeVisible()
+})
+
+test('creates an account from the login screen', async ({ page }) => {
+  const username = `e2e-${randomUUID()}`
+  const displayName = 'E2E Isolated User'
+  const email = `${username}@example.com`
+  await page.route('**/api/auth/me', (route) =>
+    route.fulfill({
+      status: 401,
+      contentType: 'application/json',
+      body: JSON.stringify({ detail: 'Sign in to access this resource.' }),
+    }),
+  )
+  await page.route('**/api/auth/register', async (route) => {
+    const registration = route.request().postDataJSON() as {
+      username: string
+      display_name: string
+      email: string
+    }
+    await route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify(registration),
+    })
+  })
+
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Create account', exact: true }).click()
+
+  await page.getByLabel('Display name').fill(displayName)
+  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Username').fill(username)
+  await page.getByLabel('Password').fill('test-password-123')
+  await page.getByRole('button', { name: 'Create account', exact: true }).click()
+
+  await expect(
+    page.getByRole('button', { name: /Account menu for E2E Isolated User/ }),
+  ).toBeVisible()
+  await expect(page.getByText(email).first()).toBeVisible()
 })

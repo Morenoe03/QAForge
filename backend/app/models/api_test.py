@@ -12,6 +12,10 @@ class ApiTest(Base):
     __tablename__ = "api_tests"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+    )
     name: Mapped[str] = mapped_column(String(150))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     method: Mapped[str] = mapped_column(String(10))

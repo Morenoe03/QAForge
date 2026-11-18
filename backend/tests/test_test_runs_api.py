@@ -84,10 +84,15 @@ def test_test_run_rejects_missing_or_ineligible_suites(client):
     ).status_code == 404
 
     suite = create_suite(client, "Empty suite")
-    assert client.post(
+    empty_run_response = client.post(
         "/api/test-runs",
         json={"name": "Empty run", "suite_id": suite["id"]},
-    ).status_code == 422
+    )
+    assert empty_run_response.status_code == 422
+    assert empty_run_response.json()["detail"] == (
+        "The selected suite has no active test cases. Link an active test case "
+        "to this suite before starting a run."
+    )
 
     archived_suite = client.patch(
         f"/api/test-suites/{suite['id']}",

@@ -395,7 +395,8 @@
 }
 
 .login-heading p,
-.login-demo-note {
+.login-demo-note,
+.login-mode-switch {
   color: #667085;
   font-size: 14px;
 }
@@ -414,6 +415,21 @@
 
 .login-demo-note {
   margin: 20px 0 0;
+}
+
+.login-mode-switch {
+  margin: 20px 0 0;
+  text-align: center;
+}
+
+.login-mode-switch button {
+  padding: 0;
+  border: 0;
+  color: #2476e8;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
 }
 
 .settings-form,
@@ -1049,7 +1065,8 @@
 .app-layout.dark-mode .workspace-empty-state p,
 .app-layout.dark-mode .settings-theme-row p,
 .app-layout.dark-mode .login-heading p,
-.app-layout.dark-mode .login-demo-note {
+.app-layout.dark-mode .login-demo-note,
+.app-layout.dark-mode .login-mode-switch {
   color: #aeb9ca;
 }
 

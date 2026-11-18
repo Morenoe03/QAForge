@@ -9,19 +9,39 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.auth import get_authenticated_user
 from app.core.database import get_db
 from app.models.user import User
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
-DEMO_USERNAME = os.getenv("QAFORGE_DEMO_USERNAME", "su")
-DEMO_PASSWORD = os.getenv("QAFORGE_DEMO_PASSWORD", "su")
+DEMO_USERNAME = (
+    (os.getenv("QAFORGE_DEMO_USERNAME") or "su").strip().lower() or "su"
+)
+DEMO_PASSWORD = os.getenv("QAFORGE_DEMO_PASSWORD") or "su"
 PASSWORD_HASH_ITERATIONS = 310_000
+
+
+def _normalize_username(value: str) -> str:
+    normalized = value.strip().lower()
+    if not normalized or any(
+        not (character.isascii() and (character.isalnum() or character in "._-"))
+        for character in normalized
+    ):
+        raise ValueError(
+            "Username can contain only letters, numbers, periods, underscores, and hyphens."
+        )
+    return normalized
 
 
 class LoginRequest(BaseModel):
     username: str = Field(min_length=1, max_length=100)
     password: str = Field(min_length=1, max_length=200)
+
+    @field_validator("username")
+    @classmethod
+    def normalize_username(cls, value: str) -> str:
+        return _normalize_username(value)
 
 
 class ProfileFields(BaseModel):
@@ -50,6 +70,16 @@ class UserProfile(ProfileFields):
 
 class UserProfileUpdate(ProfileFields):
     pass
+
+
+class RegistrationRequest(ProfileFields):
+    username: str = Field(min_length=1, max_length=100)
+    password: str = Field(min_length=8, max_length=200)
+
+    @field_validator("username")
+    @classmethod
+    def normalize_username(cls, value: str) -> str:
+        return _normalize_username(value)
 
 
 def _hash_password(password: str) -> str:
@@ -112,71 +142,83 @@ def _get_or_create_demo_user(db: Session) -> User | None:
     return user
 
 
-def _read_user(request: Request, db: Session) -> User:
-    username = request.session.get("username")
-    if not username:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Sign in to access this resource.",
-        )
-    user = db.scalar(select(User).where(User.username == username))
-    if user is None:
-        request.session.clear()
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Sign in to access this resource.",
-        )
-    return user
-
-
 @router.post("/login", response_model=UserProfile)
 def login(
     credentials: LoginRequest,
     request: Request,
     db: Session = Depends(get_db),
 ) -> UserProfile:
-    username_matches = _constant_time_matches(credentials.username, DEMO_USERNAME)
-    user = db.scalar(select(User).where(User.username == DEMO_USERNAME))
+    user = db.scalar(select(User).where(User.username == credentials.username))
     if user is None:
-        password_matches = _constant_time_matches(credentials.password, DEMO_PASSWORD)
-        if not (username_matches and password_matches):
+        if not (
+            _constant_time_matches(credentials.username, DEMO_USERNAME)
+            and _constant_time_matches(credentials.password, DEMO_PASSWORD)
+        ):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid username or password.",
             )
         user = _get_or_create_demo_user(db)
-    elif not (username_matches and _verify_password(credentials.password, user.password_hash)):
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="The demo account could not be initialized. Please try again.",
+            )
+    elif not _verify_password(credentials.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password.",
         )
 
-    if user is None:
+    request.session.clear()
+    request.session["user_id"] = user.id
+    return _profile_from_user(user)
+
+
+@router.post(
+    "/register",
+    response_model=UserProfile,
+    status_code=status.HTTP_201_CREATED,
+)
+def register(
+    registration: RegistrationRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> UserProfile:
+    user = User(
+        username=registration.username,
+        password_hash=_hash_password(registration.password),
+        display_name=registration.display_name,
+        email=registration.email,
+    )
+    db.add(user)
+    try:
+        db.commit()
+    except IntegrityError as error:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="The demo account could not be initialized. Please try again.",
-        )
-
+            detail="That username is already taken.",
+        ) from error
+    db.refresh(user)
     request.session.clear()
-    request.session["username"] = user.username
+    request.session["user_id"] = user.id
     return _profile_from_user(user)
 
 
 @router.get("/me", response_model=UserProfile)
 def get_current_user(
-    request: Request,
-    db: Session = Depends(get_db),
+    user: User = Depends(get_authenticated_user),
 ) -> UserProfile:
-    return _profile_from_user(_read_user(request, db))
+    return _profile_from_user(user)
 
 
 @router.patch("/me", response_model=UserProfile)
 def update_current_user(
     profile: UserProfileUpdate,
-    request: Request,
+    user: User = Depends(get_authenticated_user),
     db: Session = Depends(get_db),
 ) -> UserProfile:
-    user = _read_user(request, db)
     user.display_name = profile.display_name
     user.email = profile.email
     db.commit()

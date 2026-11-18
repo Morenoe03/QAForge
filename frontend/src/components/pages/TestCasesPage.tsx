@@ -224,7 +224,11 @@ export default function TestCasesPage() {
 
   function openCreateForm() {
     setEditingCase(null)
-    setForm(emptyForm)
+    const firstActiveSuite = suites.find((suite) => suite.status === 'active')
+    setForm({
+      ...emptyForm,
+      suite_ids: firstActiveSuite ? [firstActiveSuite.id] : [],
+    })
     setFormError(null)
     setFormOpen(true)
   }
@@ -317,6 +321,7 @@ export default function TestCasesPage() {
         <button
           type="button"
           className="workspace-primary-action"
+          disabled={suitesLoading}
           onClick={openCreateForm}
         >
           Create test case
@@ -588,9 +593,15 @@ export default function TestCasesPage() {
               ))}
             </select>
           </label>
+          {suites.length > 0 && (
+            <p className="test-case-form-hint">
+              Active cases linked to an active suite can be included in test runs.
+              New cases start linked to the first active suite.
+            </p>
+          )}
           {suites.length === 0 && (
             <p className="test-case-form-hint">
-              No test suites are available. You can create this case without linking it.
+              No test suites are available. Create a suite to include this case in a run.
             </p>
           )}
           {formError && (

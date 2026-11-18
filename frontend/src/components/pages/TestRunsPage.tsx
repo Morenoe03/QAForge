@@ -198,9 +198,14 @@ export default function TestRunsPage() {
                 ))}
             </select>
           </label>
-          {suites.every((suite) => suite.status !== 'active') && (
+          {suites.every((suite) => suite.status !== 'active') ? (
             <p className="test-case-form-hint">
               Create an active suite with active test cases before starting a run.
+            </p>
+          ) : (
+            <p className="test-case-form-hint">
+              Runs include active cases linked to the selected suite. In Test Cases,
+              mark a case active and assign it to this suite if it is missing.
             </p>
           )}
           {formError && (
