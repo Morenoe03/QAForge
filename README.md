@@ -108,6 +108,23 @@ API Tests are stored request definitions with manually recorded outcomes.
 `/api/api-tests/{api_test_id}/executions` appends pass, fail, or blocked history.
 QAForge does not send requests to the documented endpoints.
 
+The Pipelines page reads the latest GitHub Actions runs for one configured
+workflow and can dispatch it on a server-configured ref. Set the following in
+the project `.env`:
+
+```env
+GITHUB_ACTIONS_REPOSITORY=owner/repository
+GITHUB_ACTIONS_WORKFLOW=backend-tests.yml
+GITHUB_ACTIONS_REF=development
+GITHUB_ACTIONS_TOKEN=your-fine-grained-token
+GITHUB_ACTIONS_ALLOW_DISPATCH=true
+```
+
+The token needs Actions read/write permission and stays on the backend. Dispatch
+is disabled unless explicitly enabled. Since this application does not yet
+authenticate users, only enable dispatch for a trusted local or private
+instance.
+
 ## Frontend Commands
 
 Run these commands from `QAForge/frontend`:

@@ -513,6 +513,69 @@
   gap: 8px;
 }
 
+.pipeline-config {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.pipeline-config h2,
+.pipeline-setup h2,
+.pipeline-runs-heading h2 {
+  margin: 0 0 8px;
+  color: #172338;
+  font-size: 20px;
+}
+
+.pipeline-config p,
+.pipeline-setup p,
+.pipeline-runs-heading span {
+  margin: 0;
+  color: #667085;
+  font-size: 14px;
+}
+
+.pipeline-setup pre {
+  box-sizing: border-box;
+  width: 100%;
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid #dce3ed;
+  border-radius: 8px;
+  background: #f8faff;
+  font-size: 13px;
+}
+
+.pipeline-setup-message {
+  flex-basis: 100%;
+}
+
+.pipeline-runs-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.pipeline-run-link {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.pipeline-notice {
+  width: 100%;
+  max-width: 1060px;
+  box-sizing: border-box;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border: 1px solid #abefc6;
+  border-radius: 8px;
+  color: #027a48;
+  background: #ecfdf3;
+}
+
 .test-run-case-heading strong {
   color: #172338;
 }
@@ -845,6 +908,30 @@
   background: #1e3a8a;
 }
 
+.app-layout.dark-mode .pipeline-config h2,
+.app-layout.dark-mode .pipeline-setup h2,
+.app-layout.dark-mode .pipeline-runs-heading h2 {
+  color: #f8fafc;
+}
+
+.app-layout.dark-mode .pipeline-config p,
+.app-layout.dark-mode .pipeline-setup p,
+.app-layout.dark-mode .pipeline-runs-heading span {
+  color: #aeb9ca;
+}
+
+.app-layout.dark-mode .pipeline-setup pre {
+  border-color: #475569;
+  color: #f8fafc;
+  background: #111827;
+}
+
+.app-layout.dark-mode .pipeline-notice {
+  border-color: #027a48;
+  color: #d1fadf;
+  background: #064e3b;
+}
+
 .app-layout.dark-mode .test-run-result-form input,
 .app-layout.dark-mode .test-run-result-form select {
   border-color: #475569;
@@ -898,6 +985,12 @@
 
   .test-run-result-form {
     grid-template-columns: 1fr;
+  }
+
+  .pipeline-config,
+  .pipeline-runs-heading {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 

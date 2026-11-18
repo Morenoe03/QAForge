@@ -9,6 +9,7 @@ from app.api.routes import (
     api_tests,
     dashboard,
     defects,
+    pipelines,
     test_cases,
     test_runs,
     test_suites,
@@ -73,6 +74,7 @@ def database_health_check():
 app.include_router(dashboard.router)
 app.include_router(api_tests.router)
 app.include_router(defects.router)
+app.include_router(pipelines.router)
 app.include_router(test_cases.router)
 app.include_router(test_runs.router)
 app.include_router(test_suites.router)
