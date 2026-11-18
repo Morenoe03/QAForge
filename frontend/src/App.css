@@ -378,6 +378,99 @@
   min-width: 150px;
 }
 
+.test-run-list {
+  display: grid;
+  gap: 18px;
+  width: 100%;
+  max-width: 1060px;
+}
+
+.test-run-card {
+  margin-bottom: 0;
+}
+
+.test-run-heading,
+.test-run-case-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.test-run-heading h2 {
+  margin: 0 0 6px;
+  color: #172338;
+  font-size: 20px;
+}
+
+.test-run-heading p,
+.test-run-result-notes {
+  margin: 0;
+  color: #667085;
+  font-size: 14px;
+}
+
+.test-run-summary {
+  margin: 18px 0;
+  color: #475467;
+  font-size: 14px;
+}
+
+.test-run-case-list {
+  display: grid;
+  gap: 12px;
+}
+
+.test-run-case {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #eaecf0;
+  border-radius: 12px;
+}
+
+.test-run-case-heading strong {
+  color: #172338;
+}
+
+.test-run-case details {
+  color: #475467;
+  font-size: 14px;
+}
+
+.test-run-case details summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.test-run-result-form {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.6fr) minmax(180px, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.test-run-result-form label {
+  display: grid;
+  gap: 7px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.test-run-result-form input,
+.test-run-result-form select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #c8d3e1;
+  border-radius: 8px;
+  color: #172338;
+  background: #ffffff;
+  font: inherit;
+}
+
 .test-case-details summary {
   color: #175cd3;
   cursor: pointer;
@@ -507,6 +600,29 @@
   background: #f2f4f7;
 }
 
+.suite-status-in_progress,
+.suite-status-pending {
+  color: #6941c6;
+  background: #f4f3ff;
+}
+
+.suite-status-completed,
+.suite-status-passed {
+  color: #027a48;
+  background: #ecfdf3;
+}
+
+.suite-status-failed {
+  color: #b42318;
+  background: #fef3f2;
+}
+
+.suite-status-blocked,
+.suite-status-skipped {
+  color: #475467;
+  background: #f2f4f7;
+}
+
 .suite-text-action {
   padding: 6px 9px;
   border: 0;
@@ -611,6 +727,30 @@
   color: #aeb9ca;
 }
 
+.app-layout.dark-mode .test-run-heading h2,
+.app-layout.dark-mode .test-run-case-heading strong {
+  color: #f8fafc;
+}
+
+.app-layout.dark-mode .test-run-heading p,
+.app-layout.dark-mode .test-run-summary,
+.app-layout.dark-mode .test-run-case details,
+.app-layout.dark-mode .test-run-result-form label,
+.app-layout.dark-mode .test-run-result-notes {
+  color: #aeb9ca;
+}
+
+.app-layout.dark-mode .test-run-case {
+  border-color: #374151;
+}
+
+.app-layout.dark-mode .test-run-result-form input,
+.app-layout.dark-mode .test-run-result-form select {
+  border-color: #475569;
+  color: #ffffff;
+  background: #374151;
+}
+
 .app-layout.dark-mode .suite-form input,
 .app-layout.dark-mode .suite-form textarea,
 .app-layout.dark-mode .suite-form select,
@@ -653,6 +793,10 @@
   .test-case-history-list dl {
     grid-template-columns: 1fr;
     gap: 4px;
+  }
+
+  .test-run-result-form {
+    grid-template-columns: 1fr;
   }
 }
 

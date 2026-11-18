@@ -91,6 +91,15 @@ returns the matching items with pagination metadata. Each create, update, and
 delete appends a versioned snapshot available from
 `/api/test-cases/{case_id}/history`.
 
+Test Runs are created from an active suite and snapshot its active cases. Record
+each result as passed, failed, blocked, or skipped through
+`PATCH /api/test-runs/{run_id}/results/{result_id}`. Runs complete when every
+case has a recorded outcome; run results remain available until the run is
+deleted. The Failures page is derived from failed run results through
+`GET /api/failures`, and dashboard statistics use persisted run outcomes rather
+than sample values. Test execution is manual; QAForge does not execute test
+case code.
+
 ## Frontend Commands
 
 Run these commands from `QAForge/frontend`:
@@ -104,9 +113,9 @@ npm run preview
 
 ### Browser tests
 
-Browser tests use Playwright to exercise the Test Suites page against the real
-FastAPI service and PostgreSQL database. Start PostgreSQL and apply migrations
-before running them locally:
+Browser tests use Playwright to exercise Test Suites, Test Cases, Test Runs,
+and Failures against the real FastAPI service and PostgreSQL database. Start
+PostgreSQL and apply migrations before running them locally:
 
 ```powershell
 cd ..\backend
