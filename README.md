@@ -104,6 +104,10 @@ Defects are managed through `/api/defects` and can be linked to a failed test
 result. Their captured run and case names remain available if the linked run is
 later removed.
 
+API Tests are stored request definitions with manually recorded outcomes.
+`/api/api-tests/{api_test_id}/executions` appends pass, fail, or blocked history.
+QAForge does not send requests to the documented endpoints.
+
 ## Frontend Commands
 
 Run these commands from `QAForge/frontend`:
@@ -118,8 +122,8 @@ npm run preview
 ### Browser tests
 
 Browser tests use Playwright to exercise Test Suites, Test Cases, Test Runs,
-and Failures against the real FastAPI service and PostgreSQL database. Start
-PostgreSQL and apply migrations before running them locally:
+Failures, API Tests, and Defects against the real FastAPI service and PostgreSQL
+database. Start PostgreSQL and apply migrations before running them locally:
 
 ```powershell
 cd ..\backend

@@ -429,6 +429,90 @@
   border-radius: 12px;
 }
 
+.api-test-notice {
+  max-width: 1060px;
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  border: 1px solid #b2ddff;
+  border-radius: 8px;
+  color: #175cd3;
+  background: #eff8ff;
+  font-size: 14px;
+}
+
+.api-test-list {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  max-width: 1060px;
+}
+
+.api-test-card {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 0;
+}
+
+.api-test-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.api-test-heading h2 {
+  margin: 0 0 8px;
+  color: #172338;
+  font-size: 20px;
+}
+
+.api-test-heading p,
+.api-test-card > p {
+  margin: 0;
+  color: #667085;
+  font-size: 14px;
+}
+
+.api-test-method {
+  display: inline-block;
+  min-width: 44px;
+  color: #175cd3;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.api-test-details,
+.api-test-history {
+  color: #475467;
+  font-size: 14px;
+}
+
+.api-test-details summary,
+.api-test-history summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.api-test-details pre {
+  max-width: 100%;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.api-test-history ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 20px;
+}
+
+.api-test-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .test-run-case-heading strong {
   color: #172338;
 }
@@ -742,6 +826,23 @@
 
 .app-layout.dark-mode .test-run-case {
   border-color: #374151;
+}
+
+.app-layout.dark-mode .api-test-heading h2 {
+  color: #f8fafc;
+}
+
+.app-layout.dark-mode .api-test-heading p,
+.app-layout.dark-mode .api-test-card > p,
+.app-layout.dark-mode .api-test-details,
+.app-layout.dark-mode .api-test-history {
+  color: #aeb9ca;
+}
+
+.app-layout.dark-mode .api-test-notice {
+  border-color: #1d4ed8;
+  color: #dbeafe;
+  background: #1e3a8a;
 }
 
 .app-layout.dark-mode .test-run-result-form input,

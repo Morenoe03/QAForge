@@ -104,6 +104,8 @@ test('creates, edits, reloads, and deletes a test case linked to multiple suites
   await caseForm.getByRole('button', { name: 'Create case' }).click()
   expect((await createResponsePromise).status()).toBe(201)
 
+  await page.getByLabel('Search test cases').fill(uniqueName)
+  await page.getByRole('button', { name: 'Apply filters' }).click()
   const createdRow = page.getByRole('row').filter({ hasText: originalTitle })
   await expect(createdRow).toContainText(firstSuiteName)
   await expect(createdRow).toContainText(secondSuiteName)
@@ -146,6 +148,8 @@ test('creates, edits, reloads, and deletes a test case linked to multiple suites
 
   await page.reload()
   await page.getByRole('link', { name: 'Test Cases' }).click()
+  await page.getByLabel('Search test cases').fill(uniqueName)
+  await page.getByRole('button', { name: 'Apply filters' }).click()
   const persistedRow = page.getByRole('row').filter({ hasText: updatedTitle })
   await expect(persistedRow).toContainText('Documents the checkout workflow.')
   await expect(persistedRow).toContainText(secondSuiteName)
