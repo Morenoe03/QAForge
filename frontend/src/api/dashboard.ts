@@ -1,3 +1,5 @@
+import { apiFetch } from './request'
+
 export interface DashboardStats {
   pass_rate: number;
   tests_executed: number;
@@ -14,7 +16,7 @@ export interface DashboardStats {
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-  const response = await fetch(
+  const response = await apiFetch(
     import.meta.env.VITE_DASHBOARD_API_URL ??
       'http://127.0.0.1:8000/api/dashboard/stats',
   )

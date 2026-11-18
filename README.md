@@ -31,6 +31,12 @@ to remove that data as well, run `docker compose down --volumes`.
 
 ### Database migrations
 
+Apply pending migrations before signing in to a new database:
+
+```powershell
+docker compose exec backend alembic upgrade head
+```
+
 Run Alembic inside the backend container so it uses the same PostgreSQL settings as
 the API:
 
@@ -53,11 +59,13 @@ database host defaults to `localhost`.
 docker compose up -d db
 cd .\backend
 python -m pip install -r requirements.txt
+python -m alembic upgrade head
 python -m uvicorn app.main:app --reload
 
 'or (for mac)'
 
 python3 -m pip install -r requirements.txt
+python3 -m alembic upgrade head
 python3 -m uvicorn app.main:app --reload
 
 ```
@@ -71,6 +79,38 @@ npm run dev
 ```
 
 Vite will print the local URL, usually `http://localhost:5173`.
+
+### Login and Settings
+
+QAForge includes one local demo account, created in PostgreSQL at its first
+successful sign-in:
+
+- Username: `su`
+- Password: `su`
+
+Sign in through the frontend. The account menu opens Account and Settings, where
+the profile can be updated and the light/dark theme selected. Profile changes
+are saved in PostgreSQL; the theme preference is saved in that browser. Signing
+out clears the session. All `/api` endpoints other than `/api/auth/*` require an
+authenticated session.
+
+The demo credentials are deliberately simple and **not suitable for a publicly
+reachable deployment**. To configure the account before its first sign-in and
+provide a stable session key, set these values in the project `.env`:
+
+```env
+QAFORGE_DEMO_USERNAME=su
+QAFORGE_DEMO_PASSWORD=su
+QAFORGE_SESSION_SECRET=replace-with-a-long-random-secret
+QAFORGE_SESSION_COOKIE_SECURE=false
+```
+
+For HTTPS deployments, set `QAFORGE_SESSION_COOKIE_SECURE=true` and replace the
+demo credentials with a strong username and password before the account is
+created. The demo app intentionally supports a single shared account; it does
+not provide account registration or per-user data isolation. If no session key
+is configured, the backend generates a temporary one at startup and existing
+sessions are invalidated when it restarts.
 
 ## Backend API
 

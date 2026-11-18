@@ -6,13 +6,13 @@ const backendDirectory = resolve(process.cwd(), '..', 'backend')
 const localPythonExecutable = resolve(
   backendDirectory,
   '.venv',
-  'Scripts',
-  'python.exe',
+  process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python',
 )
 const pythonExecutable =
-  process.platform === 'win32' && existsSync(localPythonExecutable)
+  existsSync(localPythonExecutable)
     ? localPythonExecutable
-    : (process.env.PYTHON ?? 'python')
+    : (process.env.PYTHON ??
+      (process.platform === 'win32' ? 'python' : 'python3'))
 const apiBaseUrl = process.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
 const webBaseUrl = 'http://127.0.0.1:5173'
 
@@ -28,6 +28,20 @@ export default defineConfig({
     ['junit', { outputFile: 'test-results/junit.xml' }],
   ],
   outputDir: 'test-results',
+  projects: [
+    {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+    },
+    {
+      name: 'chromium',
+      testIgnore: /auth\.setup\.ts/,
+      dependencies: ['setup'],
+      use: {
+        storageState: 'test-results/.auth/user.json',
+      },
+    },
+  ],
   use: {
     baseURL: webBaseUrl,
     trace: 'retain-on-failure',

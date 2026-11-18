@@ -1,3 +1,5 @@
+import { apiFetch } from './request'
+
 export type ApiTestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 export type ApiTestOutcome = 'passed' | 'failed' | 'blocked'
 
@@ -52,13 +54,13 @@ async function throwForFailedResponse(response: Response): Promise<void> {
 }
 
 export async function listApiTests(signal?: AbortSignal): Promise<ApiTest[]> {
-  const response = await fetch(`${apiBaseUrl}/api/api-tests`, { signal })
+  const response = await apiFetch(`${apiBaseUrl}/api/api-tests`, { signal })
   await throwForFailedResponse(response)
   return response.json() as Promise<ApiTest[]>
 }
 
 export async function createApiTest(input: ApiTestInput): Promise<ApiTest> {
-  const response = await fetch(`${apiBaseUrl}/api/api-tests`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/api-tests`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -71,7 +73,7 @@ export async function updateApiTest(
   id: number,
   input: ApiTestInput,
 ): Promise<ApiTest> {
-  const response = await fetch(`${apiBaseUrl}/api/api-tests/${id}`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/api-tests/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -84,7 +86,7 @@ export async function recordApiTestExecution(
   id: number,
   input: ApiTestExecutionInput,
 ): Promise<ApiTest> {
-  const response = await fetch(`${apiBaseUrl}/api/api-tests/${id}/executions`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/api-tests/${id}/executions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -94,7 +96,7 @@ export async function recordApiTestExecution(
 }
 
 export async function deleteApiTest(id: number): Promise<void> {
-  const response = await fetch(`${apiBaseUrl}/api/api-tests/${id}`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/api-tests/${id}`, {
     method: 'DELETE',
   })
   await throwForFailedResponse(response)

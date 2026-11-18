@@ -1,3 +1,5 @@
+import { apiFetch } from './request'
+
 export type TestCasePriority = 'low' | 'medium' | 'high' | 'critical'
 export type TestCaseType = 'manual' | 'automated'
 export type TestCaseStatus = 'draft' | 'active' | 'deprecated'
@@ -87,7 +89,7 @@ export async function listTestCases(
   if (query.priority) params.set('priority', query.priority)
   if (query.status) params.set('status', query.status)
 
-  const response = await fetch(`${apiBaseUrl}/api/test-cases?${params}`, { signal })
+  const response = await apiFetch(`${apiBaseUrl}/api/test-cases?${params}`, { signal })
   await throwForFailedResponse(response)
   return response.json() as Promise<TestCasePage>
 }
@@ -96,7 +98,7 @@ export async function listTestCaseHistory(
   id: number,
   signal?: AbortSignal,
 ): Promise<TestCaseHistory[]> {
-  const response = await fetch(`${apiBaseUrl}/api/test-cases/${id}/history`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/test-cases/${id}/history`, {
     signal,
   })
   await throwForFailedResponse(response)
@@ -104,7 +106,7 @@ export async function listTestCaseHistory(
 }
 
 export async function createTestCase(input: TestCaseInput): Promise<TestCase> {
-  const response = await fetch(`${apiBaseUrl}/api/test-cases`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/test-cases`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -117,7 +119,7 @@ export async function updateTestCase(
   id: number,
   input: TestCaseInput,
 ): Promise<TestCase> {
-  const response = await fetch(`${apiBaseUrl}/api/test-cases/${id}`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/test-cases/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -127,7 +129,7 @@ export async function updateTestCase(
 }
 
 export async function deleteTestCase(id: number): Promise<void> {
-  const response = await fetch(`${apiBaseUrl}/api/test-cases/${id}`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/test-cases/${id}`, {
     method: 'DELETE',
   })
   await throwForFailedResponse(response)

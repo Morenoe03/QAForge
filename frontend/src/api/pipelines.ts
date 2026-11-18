@@ -1,3 +1,5 @@
+import { apiFetch } from './request'
+
 export interface PipelineRun {
   id: number
   name: string
@@ -43,13 +45,13 @@ async function throwForFailedResponse(response: Response): Promise<void> {
 export async function getPipelineOverview(
   signal?: AbortSignal,
 ): Promise<PipelineOverview> {
-  const response = await fetch(`${apiBaseUrl}/api/pipelines`, { signal })
+  const response = await apiFetch(`${apiBaseUrl}/api/pipelines`, { signal })
   await throwForFailedResponse(response)
   return response.json() as Promise<PipelineOverview>
 }
 
 export async function dispatchPipeline(): Promise<PipelineDispatch> {
-  const response = await fetch(`${apiBaseUrl}/api/pipelines/dispatch`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/pipelines/dispatch`, {
     method: 'POST',
   })
   await throwForFailedResponse(response)

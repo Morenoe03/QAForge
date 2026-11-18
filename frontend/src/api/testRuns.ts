@@ -1,3 +1,5 @@
+import { apiFetch } from './request'
+
 export type TestRunOutcome = 'passed' | 'failed' | 'blocked' | 'skipped'
 export type TestRunState = 'in_progress' | 'completed'
 
@@ -70,13 +72,13 @@ async function throwForFailedResponse(response: Response): Promise<void> {
 }
 
 export async function listTestRuns(signal?: AbortSignal): Promise<TestRun[]> {
-  const response = await fetch(`${apiBaseUrl}/api/test-runs`, { signal })
+  const response = await apiFetch(`${apiBaseUrl}/api/test-runs`, { signal })
   await throwForFailedResponse(response)
   return response.json() as Promise<TestRun[]>
 }
 
 export async function createTestRun(input: TestRunInput): Promise<TestRun> {
-  const response = await fetch(`${apiBaseUrl}/api/test-runs`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/test-runs`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -90,7 +92,7 @@ export async function recordTestRunResult(
   resultId: number,
   input: TestRunResultInput,
 ): Promise<TestRun> {
-  const response = await fetch(
+  const response = await apiFetch(
     `${apiBaseUrl}/api/test-runs/${runId}/results/${resultId}`,
     {
       method: 'PATCH',
@@ -103,14 +105,14 @@ export async function recordTestRunResult(
 }
 
 export async function deleteTestRun(id: number): Promise<void> {
-  const response = await fetch(`${apiBaseUrl}/api/test-runs/${id}`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/test-runs/${id}`, {
     method: 'DELETE',
   })
   await throwForFailedResponse(response)
 }
 
 export async function listFailures(signal?: AbortSignal): Promise<Failure[]> {
-  const response = await fetch(`${apiBaseUrl}/api/failures`, { signal })
+  const response = await apiFetch(`${apiBaseUrl}/api/failures`, { signal })
   await throwForFailedResponse(response)
   return response.json() as Promise<Failure[]>
 }

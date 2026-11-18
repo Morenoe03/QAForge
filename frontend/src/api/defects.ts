@@ -1,3 +1,5 @@
+import { apiFetch } from './request'
+
 export type DefectSeverity = 'low' | 'medium' | 'high' | 'critical'
 export type DefectStatus = 'open' | 'in_progress' | 'resolved' | 'closed'
 
@@ -40,13 +42,13 @@ async function throwForFailedResponse(response: Response): Promise<void> {
 }
 
 export async function listDefects(signal?: AbortSignal): Promise<Defect[]> {
-  const response = await fetch(`${apiBaseUrl}/api/defects`, { signal })
+  const response = await apiFetch(`${apiBaseUrl}/api/defects`, { signal })
   await throwForFailedResponse(response)
   return response.json() as Promise<Defect[]>
 }
 
 export async function createDefect(input: DefectInput): Promise<Defect> {
-  const response = await fetch(`${apiBaseUrl}/api/defects`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/defects`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -59,7 +61,7 @@ export async function updateDefect(
   id: number,
   input: DefectUpdate,
 ): Promise<Defect> {
-  const response = await fetch(`${apiBaseUrl}/api/defects/${id}`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/defects/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -69,7 +71,7 @@ export async function updateDefect(
 }
 
 export async function deleteDefect(id: number): Promise<void> {
-  const response = await fetch(`${apiBaseUrl}/api/defects/${id}`, {
+  const response = await apiFetch(`${apiBaseUrl}/api/defects/${id}`, {
     method: 'DELETE',
   })
   await throwForFailedResponse(response)

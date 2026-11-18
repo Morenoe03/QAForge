@@ -36,6 +36,10 @@ services:
       POSTGRES_DB: qaforge
       POSTGRES_USER: qaforge
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your .env file}
+      QAFORGE_DEMO_USERNAME: ${QAFORGE_DEMO_USERNAME:-su}
+      QAFORGE_DEMO_PASSWORD: ${QAFORGE_DEMO_PASSWORD:-su}
+      QAFORGE_SESSION_SECRET: ${QAFORGE_SESSION_SECRET:-}
+      QAFORGE_SESSION_COOKIE_SECURE: ${QAFORGE_SESSION_COOKIE_SECURE:-false}
     depends_on:
       db:
         condition: service_healthy
