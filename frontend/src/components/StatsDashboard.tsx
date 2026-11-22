@@ -2,22 +2,11 @@ import { useEffect, useState } from "react";
 import Footer from "./Footer";
 import { getDashboardStats, type DashboardStats } from "../api/dashboard";
 
-type PipelineRun = {
-  suite: string;
-  branch: string;
-  status: "Passed" | "Failed";
-};
-
-const fallbackPipelineRuns: PipelineRun[] = [
-  { suite: "Regression", branch: "main", status: "Passed" },
-  { suite: "API Tests", branch: "develop", status: "Passed" },
-  { suite: "Smoke Tests", branch: "feature", status: "Failed" },
-];
-
 export default function MainContent() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const recentRuns = stats?.recent_runs ?? []
 
   useEffect(() => {
     getDashboardStats()
@@ -35,9 +24,7 @@ export default function MainContent() {
       <section id="center">
         <div>
           <h1>Get started</h1>
-          <p>
-            Good evening,
-          </p>
+          <p>Good evening,</p>
         </div>
 
         {loading && <p role="status">Loading dashboard statistics...</p>}
@@ -50,7 +37,7 @@ export default function MainContent() {
             </div>
             <div className="summary-item">
               <strong>{stats.tests_executed.toLocaleString()}</strong>
-              <span>Runs</span>
+              <span>Tests executed</span>
             </div>
             <div className="summary-item">
               <strong>{stats.failed_tests.toLocaleString()}</strong>
@@ -65,27 +52,27 @@ export default function MainContent() {
 
         <section className="test-executions" aria-labelledby="test-executions-title">
           <div className="section-heading">
-            <h2 id="test-executions-title">Test Executions</h2>
-            <span>Recent Pipeline Runs</span>
+            <h2 id="test-executions-title">Recent Test Runs</h2>
+            <span>Execution history</span>
           </div>
-          <div className="pipeline-runs" role="table" aria-label="Recent pipeline runs">
-            {fallbackPipelineRuns.map((run) => (
-              <div className="pipeline-run" role="row" key={`${run.suite}-${run.branch}`}>
-                <strong role="cell">{run.suite}</strong>
-                <span className="pipeline-branch" role="cell">{run.branch}</span>
-                <span className={`pipeline-status ${run.status.toLowerCase()}`} role="cell">
-                  {run.status}
+          <div className="pipeline-runs" role="table" aria-label="Recent test runs">
+            {recentRuns.length === 0 && (
+              <p className="dashboard-empty-state">No test runs have been recorded.</p>
+            )}
+            {recentRuns.map((run) => (
+              <div className="pipeline-run" role="row" key={run.id}>
+                <strong role="cell">{run.name}</strong>
+                <span className="pipeline-branch" role="cell">{run.suite_name}</span>
+                <span
+                  className={`pipeline-status ${run.status === 'completed' ? 'passed' : ''}`}
+                  role="cell"
+                >
+                  {run.status.replace('_', ' ')}
                 </span>
               </div>
             ))}
           </div>
         </section>
-		
-
-
-
-
-
       </section>
 
       <Footer />

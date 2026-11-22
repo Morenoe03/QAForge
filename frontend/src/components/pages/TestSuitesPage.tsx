@@ -73,6 +73,11 @@ export default function TestSuitesPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (!form.name.trim()) {
+      setFormError('Name cannot be blank.')
+      return
+    }
+
     setSaving(true)
     setFormError(null)
 
